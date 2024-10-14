@@ -62,5 +62,9 @@ func HttpErrorCode(libvirtErrorNumber libvirt.ErrorNumber) int {
 		result = 404
 	}
 
+	if libvirtErrorNumber == libvirt.ERR_XML_INVALID_SCHEMA {
+		result = 406
+	}
+
 	return result
 }
