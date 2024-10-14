@@ -9,13 +9,12 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
 		qemuConnection  *libvirt.Connect
-		requestBodyData libvirtxml.StoragePool
+		requestBodyData poolDefine.Request
 		httpBody        poolDefine.Response
 		waitGroup       sync.WaitGroup
 		libvirtError    libvirt.Error
@@ -63,7 +62,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	// Convert request body to libvirt xml
-	libvirtXml, errorGetLibvirtXml := requestBodyData.Marshal()
+	libvirtXml, errorGetLibvirtXml := requestBodyData.StoragePool.Marshal()
 	libvirtError, isError = errorGetLibvirtXml.(libvirt.Error)
 	if isError {
 		httpBody.Response = false
@@ -78,7 +77,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	// Define pool
-	definePool, errorDefinePool := qemuConnection.StoragePoolDefineXML(libvirtXml, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	definePool, errorDefinePool := qemuConnection.StoragePoolDefineXML(libvirtXml, requestBodyData.Option)
 	libvirtError, isError = errorDefinePool.(libvirt.Error)
 	if isError {
 		httpBody.Response = false
@@ -110,7 +109,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	// Http ok response
 	httpBody.Response = true
 	httpBody.Code = http.StatusCreated
-	httpBody.Message.Uuid = definedPoolUuid
+	httpBody.Data.Uuid = definedPoolUuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 	temboLog.InfoLogging("new pool defined with uuid:", definedPoolUuid, "[", request.URL.Path, "]")
 
