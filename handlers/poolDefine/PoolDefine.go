@@ -51,8 +51,9 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		defer waitGroup.Done()
 	}()
 	waitGroup.Wait()
-	// ConnectToLocalSystem().close() should be used to release the resources after the connection is no longer needed
-	defer qemuConnection.Close()
+	if libvirtError.Code == 11 {
+		qemuConnection.Close()
+	}
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
@@ -60,6 +61,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		return
 	}
+	defer qemuConnection.Close()
 
 	// Convert request body to libvirt xml
 	libvirtXml, errorGetLibvirtXml := requestBodyData.StoragePool.Marshal()
@@ -90,6 +92,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
+	defer definePool.Free()
 
 	// Get defined pool UUID
 	definedPoolUuid, errorGetDefinedPoolUuid := definePool.GetUUIDString()
@@ -112,16 +115,4 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Data.Uuid = definedPoolUuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 	temboLog.InfoLogging("new pool defined with uuid:", definedPoolUuid, "[", request.URL.Path, "]")
-
-	go func() {
-		// Free storage pool object
-		libvirtError, isError = definePool.Free().(libvirt.Error)
-		if isError {
-			temboLog.ErrorLogging(
-				"failed to free storage pool object [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-				libvirtError.Message,
-			)
-			return
-		}
-	}()
 }
