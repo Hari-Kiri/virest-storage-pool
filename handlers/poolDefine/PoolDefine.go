@@ -9,13 +9,12 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
 		qemuConnection  *libvirt.Connect
-		requestBodyData libvirtxml.StoragePool
+		requestBodyData poolDefine.Request
 		httpBody        poolDefine.Response
 		waitGroup       sync.WaitGroup
 		libvirtError    libvirt.Error
@@ -52,8 +51,9 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		defer waitGroup.Done()
 	}()
 	waitGroup.Wait()
-	// ConnectToLocalSystem().close() should be used to release the resources after the connection is no longer needed
-	defer qemuConnection.Close()
+	if libvirtError.Code == 11 {
+		qemuConnection.Close()
+	}
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
@@ -61,9 +61,10 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		return
 	}
+	defer qemuConnection.Close()
 
 	// Convert request body to libvirt xml
-	libvirtXml, errorGetLibvirtXml := requestBodyData.Marshal()
+	libvirtXml, errorGetLibvirtXml := requestBodyData.StoragePool.Marshal()
 	libvirtError, isError = errorGetLibvirtXml.(libvirt.Error)
 	if isError {
 		httpBody.Response = false
@@ -78,7 +79,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	// Define pool
-	definePool, errorDefinePool := qemuConnection.StoragePoolDefineXML(libvirtXml, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	definePool, errorDefinePool := qemuConnection.StoragePoolDefineXML(libvirtXml, requestBodyData.Option)
 	libvirtError, isError = errorDefinePool.(libvirt.Error)
 	if isError {
 		httpBody.Response = false
@@ -91,6 +92,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
+	defer definePool.Free()
 
 	// Get defined pool UUID
 	definedPoolUuid, errorGetDefinedPoolUuid := definePool.GetUUIDString()
@@ -110,19 +112,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	// Http ok response
 	httpBody.Response = true
 	httpBody.Code = http.StatusCreated
-	httpBody.Message.Uuid = definedPoolUuid
+	httpBody.Data.Uuid = definedPoolUuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 	temboLog.InfoLogging("new pool defined with uuid:", definedPoolUuid, "[", request.URL.Path, "]")
-
-	go func() {
-		// Free storage pool object
-		libvirtError, isError = definePool.Free().(libvirt.Error)
-		if isError {
-			temboLog.ErrorLogging(
-				"failed to free storage pool object [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-				libvirtError.Message,
-			)
-			return
-		}
-	}()
 }
