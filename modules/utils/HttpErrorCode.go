@@ -15,7 +15,7 @@ func HttpErrorCode(libvirtErrorNumber libvirt.ErrorNumber) int {
 	}
 
 	if libvirtErrorNumber == libvirt.ERR_NO_SUPPORT {
-		result = 503
+		result = 501
 	}
 
 	if libvirtErrorNumber == libvirt.ERR_UNKNOWN_HOST {
