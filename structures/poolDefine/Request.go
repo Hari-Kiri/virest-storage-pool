@@ -6,7 +6,6 @@ import (
 )
 
 type Request struct {
-	PoolUuid    string                         `json:"poolUuid"`
 	Option      libvirt.StoragePoolDefineFlags `json:"option"`
 	StoragePool libvirtxml.StoragePool         `json:"storagePool"`
 }
