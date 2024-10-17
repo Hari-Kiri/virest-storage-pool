@@ -1,4 +1,4 @@
-package poolDefine
+package storagePool
 
 import (
 	"net/http"
