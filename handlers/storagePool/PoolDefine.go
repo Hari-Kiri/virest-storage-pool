@@ -51,7 +51,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		defer waitGroup.Done()
 	}()
 	waitGroup.Wait()
-	if libvirtError.Code == 11 {
+	if libvirtError.Code == 11 && qemuConnection != nil {
 		qemuConnection.Close()
 	}
 	if isError {
