@@ -9,9 +9,9 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Prepare request for any structure. This module will check the expected HTTP request method and convert the JSON request body to
+// Check the expected HTTP request method and convert the JSON request body to
 // structure if any.
-func PrepareRequest(httpRequest *http.Request, expectedRequestMethod string, structure any) (libvirt.Error, bool) {
+func CheckRequest(httpRequest *http.Request, expectedRequestMethod string, structure any) (libvirt.Error, bool) {
 	// Create libvirt error number
 	var libvirtErrorNumber libvirt.ErrorNumber
 	if expectedRequestMethod == "GET" {
