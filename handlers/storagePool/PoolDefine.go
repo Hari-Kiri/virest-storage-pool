@@ -2,9 +2,7 @@ package storagePool
 
 import (
 	"net/http"
-	"sync"
 
-	goVirtQemuConnector "github.com/Hari-Kiri/govirt-qemu-connector"
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
@@ -16,44 +14,11 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		qemuConnection  *libvirt.Connect
 		requestBodyData poolDefine.Request
 		httpBody        poolDefine.Response
-		waitGroup       sync.WaitGroup
 		libvirtError    libvirt.Error
 		isError         bool
 	)
 
-	waitGroup.Add(2)
-	go func() {
-		// Connect to qemu hypervisor
-		if !isError {
-			var errorConnectToQemu error
-			qemuConnection, errorConnectToQemu = goVirtQemuConnector.ConnectToLocalSystem()
-			libvirtError, isError = errorConnectToQemu.(libvirt.Error)
-		}
-		if isError && libvirtError.Code != 11 {
-			temboLog.ErrorLogging(
-				"failed connect to hypervisor [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-				libvirtError.Message,
-			)
-		}
-		defer waitGroup.Done()
-	}()
-	go func() {
-		// Prepare request
-		if !isError {
-			libvirtError, isError = utils.PrepareRequest(request, http.MethodPost, &requestBodyData)
-		}
-		if isError && libvirtError.Code == 11 {
-			temboLog.ErrorLogging(
-				"failed preparing request [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-				libvirtError.Message,
-			)
-		}
-		defer waitGroup.Done()
-	}()
-	waitGroup.Wait()
-	if libvirtError.Code == 11 {
-		qemuConnection.Close()
-	}
+	qemuConnection, libvirtError, isError = utils.RequestPrecondition(request, http.MethodPost, &requestBodyData)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
