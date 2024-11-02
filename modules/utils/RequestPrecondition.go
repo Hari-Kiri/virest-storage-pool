@@ -4,13 +4,19 @@ import (
 	"net/http"
 	"sync"
 
-	goVirtQemuConnector "github.com/Hari-Kiri/govirt-qemu-connector"
 	"github.com/Hari-Kiri/temboLog"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"libvirt.org/go/libvirt"
 )
 
+// Defined generic type constraint for request model structure.
+type requestStructure interface {
+	poolDefine.Request | poolUndefine.Request
+}
+
 // Connect to local qemu socket and check request.
-func RequestPrecondition(httpRequest *http.Request, expectedRequestMethod string, structure any) (*libvirt.Connect, libvirt.Error, bool) {
+func RequestPrecondition[RequestStructure requestStructure](httpRequest *http.Request, expectedRequestMethod string, structure *RequestStructure) (*libvirt.Connect, libvirt.Error, bool) {
 	var (
 		result       *libvirt.Connect
 		waitGroup    sync.WaitGroup
@@ -22,9 +28,7 @@ func RequestPrecondition(httpRequest *http.Request, expectedRequestMethod string
 	go func() {
 		// Connect to qemu hypervisor
 		if !isError {
-			var errorConnectToQemu error
-			result, errorConnectToQemu = goVirtQemuConnector.ConnectToLocalSystem()
-			libvirtError, isError = errorConnectToQemu.(libvirt.Error)
+			result, libvirtError, isError = NewConnect("qemu:///system")
 		}
 		if isError && libvirtError.Code != 11 {
 			temboLog.ErrorLogging(
