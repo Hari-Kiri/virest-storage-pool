@@ -24,6 +24,5 @@ go.work.sum
 # env file
 .env
 
-# Vscode generated files
-.vscode
+# Vscode launcher generated binary files
 __debug_bin*
