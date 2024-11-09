@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Hari-Kiri/temboLog"
+	"github.com/Hari-Kiri/virest-storage-pool/modules"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"libvirt.org/go/libvirt"
@@ -18,7 +19,7 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		isError         bool
 	)
 
-	qemuConnection, libvirtError, isError = utils.RequestPrecondition(request, http.MethodPatch, &requestBodyData)
+	qemuConnection, libvirtError, isError = modules.RequestPrecondition(request, http.MethodPatch, &requestBodyData)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
