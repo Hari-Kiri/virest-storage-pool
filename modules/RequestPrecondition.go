@@ -2,7 +2,6 @@ package modules
 
 import (
 	"net/http"
-	"runtime"
 	"sync"
 
 	"github.com/Hari-Kiri/temboLog"
@@ -23,6 +22,7 @@ type requestStructure interface {
 func RequestPrecondition[RequestStructure requestStructure](
 	httpRequest *http.Request,
 	expectedRequestMethod string,
+	connectionUri string,
 	structure *RequestStructure,
 ) (
 	*libvirt.Connect,
@@ -36,12 +36,10 @@ func RequestPrecondition[RequestStructure requestStructure](
 		isError      bool
 	)
 
-	runtime.GOMAXPROCS(2)
-
 	waitGroup.Add(2)
 	go func() {
 		if !isError {
-			result, libvirtError, isError = utils.NewConnectWithAuth("qemu+ssh://192.168.122.3/system", nil, 0)
+			result, libvirtError, isError = utils.NewConnectWithAuth(connectionUri, nil, 0)
 		}
 		if isError && libvirtError.Code != 11 {
 			temboLog.ErrorLogging(
