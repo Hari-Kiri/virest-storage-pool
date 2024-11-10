@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/Hari-Kiri/temboLog"
-	"github.com/Hari-Kiri/virest-storage-pool/modules"
+	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
 	"libvirt.org/go/libvirt"
@@ -21,7 +21,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		isError         bool
 	)
 
-	qemuConnection, libvirtError, isError = modules.RequestPrecondition(request, http.MethodPost,
+	qemuConnection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPost,
 		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
 	if isError {
 		httpBody.Response = false
@@ -36,7 +36,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer qemuConnection.Close()
 
-	result, libvirtError, isError = modules.PoolDefine(qemuConnection, requestBodyData.StoragePool, requestBodyData.Option)
+	result, libvirtError, isError = storagePool.PoolDefine(qemuConnection, requestBodyData.StoragePool, requestBodyData.Option)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
