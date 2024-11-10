@@ -28,6 +28,10 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
+		temboLog.ErrorLogging(
+			"failed connecting to hypervisor [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			libvirtError.Message,
+		)
 		return
 	}
 	defer qemuConnection.Close()
