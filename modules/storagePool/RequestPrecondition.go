@@ -1,4 +1,4 @@
-package modules
+package storagePool
 
 import (
 	"net/http"
