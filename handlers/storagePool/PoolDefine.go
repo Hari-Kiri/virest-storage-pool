@@ -32,7 +32,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer qemuConnection.Close()
 
-	result, libvirtError, isError = modules.PoolDefine(qemuConnection, requestBodyData)
+	result, libvirtError, isError = modules.PoolDefine(qemuConnection, requestBodyData.StoragePool, requestBodyData.Option)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
