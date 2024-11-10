@@ -6,6 +6,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
+// Undefine storage pool using their UUID string. Upon success, there is no content (HTTP 201).
 func PoolUndefine(qemuConnection *libvirt.Connect, poolUuid string) (libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
