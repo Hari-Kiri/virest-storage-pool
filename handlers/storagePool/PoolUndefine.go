@@ -27,28 +27,15 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-		return
-	}
-	defer qemuConnection.Close()
-
-	// Get libvirt storage pool object
-	storagePoolObject, errorGetStoragePoolObject := qemuConnection.LookupStoragePoolByUUIDString(requestBodyData.Uuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
-	if isError {
-		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
-		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed get storage pool object [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed connecting to hypervisor [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
 	}
-	defer storagePoolObject.Free()
+	defer qemuConnection.Close()
 
-	// Undefine pool
-	libvirtError, isError = storagePoolObject.Undefine().(libvirt.Error)
+	libvirtError, isError = modules.PoolUndefine(qemuConnection, requestBodyData.Uuid)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
