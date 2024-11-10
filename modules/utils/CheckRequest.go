@@ -6,12 +6,18 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"libvirt.org/go/libvirt"
 )
 
-// Check the expected HTTP request method and convert the JSON request body to
-// structure if any.
-func CheckRequest(httpRequest *http.Request, expectedRequestMethod string, structure any) (libvirt.Error, bool) {
+// Defined generic type constraint for request model structure.
+type RequestStructure interface {
+	poolDefine.Request | poolUndefine.Request
+}
+
+// Check the expected HTTP request method and convert the JSON request body to structure if any.
+func CheckRequest[Structure RequestStructure](httpRequest *http.Request, expectedRequestMethod string, structure *Structure) (libvirt.Error, bool) {
 	// Create libvirt error number
 	var libvirtErrorNumber libvirt.ErrorNumber
 	if expectedRequestMethod == "GET" {
