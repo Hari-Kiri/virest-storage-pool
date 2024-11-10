@@ -7,6 +7,9 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
+// Define new storage pool using json formatted data with option as define flags.
+// The option with UInteger 1 will validate the JSON document against libvirt schema, while the option with UInteger 0 does nothing.
+// Upon success, the UUID of the newly defined pool will be returned.
 func PoolDefine(qemuConnection *libvirt.Connect, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (string, libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
