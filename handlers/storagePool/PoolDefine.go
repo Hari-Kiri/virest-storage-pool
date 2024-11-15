@@ -29,7 +29,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed connecting to hypervisor [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
