@@ -5,18 +5,29 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolList"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"libvirt.org/go/libvirt"
 )
 
 // Defined generic type constraint for request model structure.
 type RequestStructure interface {
-	poolDefine.Request | poolUndefine.Request
+	poolList.Request | poolDefine.Request | poolUndefine.Request
 }
 
-// Check the expected HTTP request method and convert the JSON request body to structure if any.
+// Check the expected HTTP request method and convert the JSON request body to structure if not HTTP GET method. HTTP GET method must be use
+// query parameter.
+//
+// Notes for HTTP GET method:
+//
+// - Query parameter and structure field will be compared in case sensitive.
+//
+// - Every structure field data type must be string, so You must convert it to the right data type before You use it.
+//
+// - Untested for array query argument.
 func CheckRequest[Structure RequestStructure](httpRequest *http.Request, expectedRequestMethod string, structure *Structure) (libvirt.Error, bool) {
 	// Create libvirt error number
 	var libvirtErrorNumber libvirt.ErrorNumber
@@ -58,12 +69,29 @@ func CheckRequest[Structure RequestStructure](httpRequest *http.Request, expecte
 	}
 
 	// Request body empty
-	if len(requestBody) == 0 {
+	if len(requestBody) == 0 && expectedRequestMethod != "GET" {
 		return libvirt.Error{}, false
 	}
 
+	// Set GET parameter to structure. For now HTTP GET Method only have one query parameter "option"
+	var errorSetStructure error
+	if expectedRequestMethod == "GET" {
+		errorSetStructure = setHttpGetStructure(httpRequest, structure)
+	}
+	if errorSetStructure != nil {
+		return libvirt.Error{
+			Code:    libvirt.ERR_INVALID_ARG,
+			Domain:  libvirt.FROM_NET,
+			Message: fmt.Sprintf("%s", errorSetStructure),
+			Level:   libvirt.ERR_ERROR,
+		}, true
+	}
+
 	// Parse JSON to model
-	errorUnmarshal := json.Unmarshal(requestBody, structure)
+	var errorUnmarshal error
+	if expectedRequestMethod != "GET" {
+		errorUnmarshal = json.Unmarshal(requestBody, structure)
+	}
 	if errorUnmarshal != nil {
 		return libvirt.Error{
 			Code:    libvirt.ERR_INTERNAL_ERROR,
@@ -74,4 +102,23 @@ func CheckRequest[Structure RequestStructure](httpRequest *http.Request, expecte
 	}
 
 	return libvirt.Error{}, false
+}
+
+// Set HTTP GET method query parameter to structure. Query parameter and structure field will be compared in case sensitive.
+// Every structure field data type must be string.
+func setHttpGetStructure[Structure RequestStructure](httpRequest *http.Request, structure *Structure) error {
+	var errorResult error
+
+	keys := reflect.ValueOf(structure).Elem()
+	for i := 0; i < keys.NumField(); i++ {
+		reflect.ValueOf(structure).Elem().FieldByName(
+			keys.Type().Field(i).Name,
+		).SetString(
+			httpRequest.URL.Query().Get(
+				keys.Type().Field(i).Name,
+			),
+		)
+	}
+
+	return errorResult
 }

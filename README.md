@@ -6,5 +6,29 @@ For example, the storage administrator responsible for an NFS server creates a s
 
 Libvirt provides storage management on the physical host through storage pools and volumes and this software provides the interface using REST API.
 
+## Needed Package to Running Executable
+- qemu-kvm
+- libvirt-daemon-system
+- bridge-utils
+
+## Needed Package for Development
+- libvirt-dev
+- gcc
+
+## Add User to Libvirt Group & KVM Group
+```shell
+sudo adduser '<username>' libvirt
+```
+```shell
+sudo adduser '<username>' kvm
+```
+
+## Known error:
+- Libvirt Go Binding methods undefined, please enable "cgo" with command:
+    ```shell
+    export CGO_ENABLED=1
+    ```
+- [Can't access storage, file permission denied](https://ostechnix.com/solved-cannot-access-storage-file-permission-denied-error-in-kvm-libvirt/)
+
 #### References
 - https://libvirt.org/storage.html
