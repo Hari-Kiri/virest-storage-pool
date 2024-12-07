@@ -13,8 +13,12 @@ type Response struct {
 }
 
 type Data struct {
-	Config     libvirtxml.StoragePool   `json:"config"`
-	State      libvirt.StoragePoolState `json:"state"` // Reference https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolState
-	Autostart  bool                     `json:"autostart"`
-	Persistent bool                     `json:"persistent"`
+	Uuid       string                     `json:"uuid"`
+	Name       string                     `json:"name"`
+	State      libvirt.StoragePoolState   `json:"state"`
+	Autostart  bool                       `json:"autostart"`
+	Persistent bool                       `json:"persistent"`
+	Capacity   libvirtxml.StoragePoolSize `json:"capacity"`
+	Allocation libvirtxml.StoragePoolSize `json:"allocation"`
+	Available  libvirtxml.StoragePoolSize `json:"available"`
 }
