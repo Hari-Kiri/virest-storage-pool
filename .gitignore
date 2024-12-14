@@ -26,3 +26,4 @@ go.work.sum
 
 # Vscode launcher generated binary files
 __debug_bin*
+.vscode
