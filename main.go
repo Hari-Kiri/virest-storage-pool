@@ -33,6 +33,7 @@ func main() {
 	// Make handler
 	goalMakeHandler.HandleRequest(storagePool.PoolList, "/pool-list")
 	goalMakeHandler.HandleRequest(storagePool.PoolDefine, "/pool-define")
+	goalMakeHandler.HandleRequest(storagePool.PoolBuild, "/pool-build")
 	goalMakeHandler.HandleRequest(storagePool.PoolUndefine, "/pool-undefine")
 	goalMakeHandler.Serve(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"), portFromEnv)
 }
