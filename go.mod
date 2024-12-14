@@ -9,4 +9,4 @@ require (
 	libvirt.org/go/libvirtxml v1.10009.0
 )
 
-require github.com/Hari-Kiri/virest-utilities v0.1.3
+require github.com/Hari-Kiri/virest-utilities v0.1.4-pool-build-dev0
