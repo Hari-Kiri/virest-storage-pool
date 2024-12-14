@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/Hari-Kiri/temboLog"
-	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
+	"github.com/Hari-Kiri/virest-utilities/utils"
 	"libvirt.org/go/libvirt"
 )
 
