@@ -2,8 +2,10 @@ package storagePool
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/Hari-Kiri/temboLog"
+	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/utils"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"libvirt.org/go/libvirt"
@@ -18,34 +20,22 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		isError         bool
 	)
 
-	qemuConnection, libvirtError, isError = utils.RequestPrecondition(request, http.MethodPatch, &requestBodyData)
-	if isError {
-		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
-		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-		return
-	}
-	defer qemuConnection.Close()
-
-	// Get libvirt storage pool object
-	storagePoolObject, errorGetStoragePoolObject := qemuConnection.LookupStoragePoolByUUIDString(requestBodyData.Uuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	qemuConnection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPatch,
+		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed get storage pool object [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
 	}
-	defer storagePoolObject.Free()
+	defer qemuConnection.Close()
 
-	// Undefine pool
-	libvirtError, isError = storagePoolObject.Undefine().(libvirt.Error)
+	libvirtError, isError = storagePool.PoolUndefine(qemuConnection, requestBodyData.Uuid)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
