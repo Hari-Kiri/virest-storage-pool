@@ -1,13 +1,16 @@
 package storagePool
 
 import (
-	"github.com/Hari-Kiri/temboLog"
+	"fmt"
+	"net/http"
+
+	structure "github.com/Hari-Kiri/virest-storage-pool/structures/poolDetail"
+	"github.com/Hari-Kiri/virest-utilities/utils"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
 
 // Fetch an XML document describing all aspects of the storage pool.
-// This is suitable for later feeding back into the virStoragePoolCreateXML method.
 //
 // Get detail when pool in active state:
 //
@@ -16,16 +19,16 @@ import (
 // Get detail when pool in inactive state:
 //
 //	libvirtStorageXMLFlags = 1
-func PoolDetail(libvirtStoragePool libvirt.StoragePool, libvirtStorageXMLFlags libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
+func poolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageXMLFlags libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
 		isError      bool
 	)
 
-	storagePoolXml, errorGetStoragePoolXml := libvirtStoragePool.GetXMLDesc(libvirtStorageXMLFlags)
+	storagePoolXml, errorGetStoragePoolXml := libvirtStoragePoolObject.GetXMLDesc(libvirtStorageXMLFlags)
 	libvirtError, isError = errorGetStoragePoolXml.(libvirt.Error)
 	if errorGetStoragePoolXml != nil {
-		temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolXml)
+		libvirtError.Message = fmt.Sprintf("failed get XML of pool: %s", libvirtError.Message)
 		return libvirtxml.StoragePool{}, libvirtError, isError
 	}
 
@@ -33,9 +36,51 @@ func PoolDetail(libvirtStoragePool libvirt.StoragePool, libvirtStorageXMLFlags l
 	errorUnmarshallStoragePool := result.Unmarshal(storagePoolXml)
 	libvirtError, isError = errorUnmarshallStoragePool.(libvirt.Error)
 	if errorUnmarshallStoragePool != nil {
-		temboLog.ErrorLogging("failed Unmarshal XML of pool", errorUnmarshallStoragePool)
+		libvirtError.Message = fmt.Sprintf("failed Unmarshal XML of pool: %s", libvirtError.Message)
 		return libvirtxml.StoragePool{}, libvirtError, isError
 	}
 
 	return result, libvirtError, false
+}
+
+// Fetch an XML document describing all aspects of the storage pool.
+//
+// Get detail when pool in active state:
+//
+//	libvirtStorageXMLFlags = 0
+//
+// Get detail when pool in inactive state:
+//
+//	libvirtStorageXMLFlags = 1
+func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.StorageXMLFlags) {
+	var (
+		result       structure.Response
+		libvirtError libvirt.Error
+		isError      bool
+	)
+
+	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
+	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	if isError {
+		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
+		result.Response = false
+		result.Code = utils.HttpErrorCode(libvirtError.Code)
+		result.Error = libvirtError
+		return
+	}
+	defer storagePoolObject.Free()
+
+	var storagePoolDetail libvirtxml.StoragePool
+	storagePoolDetail, libvirtError, isError = poolDetail(*storagePoolObject, option)
+	if isError {
+		libvirtError.Message = fmt.Sprintf("failed get storage pool using object: %s", libvirtError.Message)
+		result.Response = false
+		result.Code = utils.HttpErrorCode(libvirtError.Code)
+		result.Error = libvirtError
+		return
+	}
+
+	result.Response = true
+	result.Code = http.StatusOK
+	result.Data = storagePoolDetail
 }
