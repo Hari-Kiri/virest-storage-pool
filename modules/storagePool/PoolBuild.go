@@ -34,10 +34,10 @@ func PoolBuild(connection *libvirt.Connect, poolUuid string, option libvirt.Stor
 	}
 	defer storagePoolObject.Free()
 
-	// Undefine pool
+	// Build pool
 	libvirtError, isError = storagePoolObject.Build(option).(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed to undefine pool: %s", libvirtError.Message)
+		libvirtError.Message = fmt.Sprintf("failed to build pool: %s", libvirtError.Message)
 		return libvirtError, isError
 	}
 

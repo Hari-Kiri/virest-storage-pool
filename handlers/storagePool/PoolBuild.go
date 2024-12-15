@@ -11,7 +11,6 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Build the underlying storage pool.
 func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
 		qemuConnection  *libvirt.Connect
@@ -43,7 +42,7 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to define pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed to build pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
