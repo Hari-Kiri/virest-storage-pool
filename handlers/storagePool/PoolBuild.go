@@ -6,16 +6,16 @@ import (
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
-	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolBuild"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"libvirt.org/go/libvirt"
 )
 
-func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
+func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
 		connection      *libvirt.Connect
-		requestBodyData poolUndefine.Request
-		httpBody        poolUndefine.Response
+		requestBodyData poolBuild.Request
+		httpBody        poolBuild.Response
 		libvirtError    libvirt.Error
 		isError         bool
 	)
@@ -35,20 +35,22 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	libvirtError, isError = storagePool.PoolUndefine(connection, requestBodyData.Uuid)
+	libvirtError, isError = storagePool.PoolBuild(connection, requestBodyData.Uuid, requestBodyData.Option)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to undefine pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed to build pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
 	}
 
-	// Http ok response
-	utils.NoContentResponseBuilder(responseWriter)
-	temboLog.InfoLogging("pool", requestBodyData.Uuid, "undefined [", request.URL.Path, "]")
+	httpBody.Response = true
+	httpBody.Code = http.StatusOK
+	httpBody.Data.Uuid = requestBodyData.Uuid
+	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
+	temboLog.InfoLogging("pool", requestBodyData.Uuid, "built [", request.URL.Path, "]")
 }

@@ -6,8 +6,8 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Undefine storage pool using their UUID string. Return libvirt.error nil on success, or libvirt.error not nil upon failure.
-func PoolUndefine(connection *libvirt.Connect, poolUuid string) (libvirt.Error, bool) {
+// Starts an inactive storage pool. Return libvirt.error nil on success, or libvirt.error not nil upon failure
+func PoolCreate(connection *libvirt.Connect, poolUuid string, option libvirt.StoragePoolCreateFlags) (libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
 		isError      bool
@@ -22,10 +22,10 @@ func PoolUndefine(connection *libvirt.Connect, poolUuid string) (libvirt.Error, 
 	}
 	defer storagePoolObject.Free()
 
-	// Undefine pool
-	libvirtError, isError = storagePoolObject.Undefine().(libvirt.Error)
+	// Create pool
+	libvirtError, isError = storagePoolObject.Create(option).(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed to undefine pool: %s", libvirtError.Message)
+		libvirtError.Message = fmt.Sprintf("failed to create pool: %s", libvirtError.Message)
 		return libvirtError, isError
 	}
 

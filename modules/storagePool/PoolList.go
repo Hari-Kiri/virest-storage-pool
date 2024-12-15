@@ -7,20 +7,19 @@ import (
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolList"
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 // Collect the list of storage pools, and allocate an array to store those objects.
 // Normally, all storage pools are returned; however, flags can be used to filter the results for a smaller list of targeted pools.
 // More about option UInteger [https://libvirt.org/html/libvirt-libvirt-storage.html#virConnectListAllStoragePoolsFlags].
-func PoolList(qemuConnection *libvirt.Connect, option libvirt.ConnectListAllStoragePoolsFlags, storageXmlFlags libvirt.StorageXMLFlags) ([]poolList.Data, libvirt.Error, bool) {
+func PoolList(connection *libvirt.Connect, option libvirt.ConnectListAllStoragePoolsFlags, storageXmlFlags libvirt.StorageXMLFlags) ([]poolList.Data, libvirt.Error, bool) {
 	var (
 		waitGroup    sync.WaitGroup
 		libvirtError libvirt.Error
 		isError      bool
 	)
 
-	storagePools, errorGetListOfStoragePool := qemuConnection.ListAllStoragePools(option)
+	storagePools, errorGetListOfStoragePool := connection.ListAllStoragePools(option)
 	libvirtError, isError = errorGetListOfStoragePool.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed list storage pool: %s", libvirtError.Message)
@@ -40,24 +39,17 @@ func PoolList(qemuConnection *libvirt.Connect, option libvirt.ConnectListAllStor
 			}
 			defer storagePools[index].Free()
 
-			storagePoolXml, errorGetStoragePoolXml := storagePools[index].GetXMLDesc(storageXmlFlags)
-			if errorGetStoragePoolXml != nil {
-				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolXml)
+			storagePoolDetail, errorGetStoragePoolDetail, isError := PoolDetail(storagePools[index], storageXmlFlags)
+			if isError {
+				temboLog.ErrorLogging("failed get pool detail", errorGetStoragePoolDetail)
 				return
 			}
 
-			var storagePool libvirtxml.StoragePool
-			errorUnmarshallStoragePool := storagePool.Unmarshal(storagePoolXml)
-			if errorUnmarshallStoragePool != nil {
-				temboLog.ErrorLogging("failed Unmarshal XML of pool", errorUnmarshallStoragePool)
-				return
-			}
-
-			result[index].Uuid = storagePool.UUID
-			result[index].Name = storagePool.Name
-			result[index].Capacity = *storagePool.Capacity
-			result[index].Allocation = *storagePool.Allocation
-			result[index].Available = *storagePool.Available
+			result[index].Uuid = storagePoolDetail.UUID
+			result[index].Name = storagePoolDetail.Name
+			result[index].Capacity = *storagePoolDetail.Capacity
+			result[index].Allocation = *storagePoolDetail.Allocation
+			result[index].Available = *storagePoolDetail.Available
 		}(i)
 		go func(index int) {
 			defer waitGroup.Done()
