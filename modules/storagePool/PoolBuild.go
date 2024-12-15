@@ -6,19 +6,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Build the underlying storage pool.
-//
-// connection:
-//
-//	pointer to hypervisor connection
-//
-// option:
-//
-//	bitwise-OR of libvirt.StoragePoolBuildFlags
-//
-// Returns:
-//
-//	libvirt.error nil on success, or libvirt.error not nil upon failure
+// Build the underlying storage pool. Return libvirt.error nil on success, or libvirt.error not nil upon failure
 func PoolBuild(connection *libvirt.Connect, poolUuid string, option libvirt.StoragePoolBuildFlags) (libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error

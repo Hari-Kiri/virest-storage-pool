@@ -6,15 +6,15 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Undefine storage pool using their UUID string. Upon success, there is no content (HTTP 201).
-func PoolUndefine(qemuConnection *libvirt.Connect, poolUuid string) (libvirt.Error, bool) {
+// Undefine storage pool using their UUID string. Return libvirt.error nil on success, or libvirt.error not nil upon failure.
+func PoolUndefine(connection *libvirt.Connect, poolUuid string) (libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
 		isError      bool
 	)
 
 	// Get libvirt storage pool object
-	storagePoolObject, errorGetStoragePoolObject := qemuConnection.LookupStoragePoolByUUIDString(poolUuid)
+	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
 	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
