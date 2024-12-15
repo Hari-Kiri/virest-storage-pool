@@ -2,10 +2,7 @@ package storagePool
 
 import (
 	"fmt"
-	"net/http"
 
-	structure "github.com/Hari-Kiri/virest-storage-pool/structures/poolDetail"
-	"github.com/Hari-Kiri/virest-utilities/utils"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -52,9 +49,8 @@ func poolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageXMLF
 // Get detail when pool in inactive state:
 //
 //	libvirtStorageXMLFlags = 1
-func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.StorageXMLFlags) {
+func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
 	var (
-		result       structure.Response
 		libvirtError libvirt.Error
 		isError      bool
 	)
@@ -63,24 +59,16 @@ func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.Sto
 	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
-		result.Response = false
-		result.Code = utils.HttpErrorCode(libvirtError.Code)
-		result.Error = libvirtError
-		return
+		return libvirtxml.StoragePool{}, libvirtError, isError
 	}
 	defer storagePoolObject.Free()
 
-	var storagePoolDetail libvirtxml.StoragePool
-	storagePoolDetail, libvirtError, isError = poolDetail(*storagePoolObject, option)
+	var result libvirtxml.StoragePool
+	result, libvirtError, isError = poolDetail(*storagePoolObject, option)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed get storage pool using object: %s", libvirtError.Message)
-		result.Response = false
-		result.Code = utils.HttpErrorCode(libvirtError.Code)
-		result.Error = libvirtError
-		return
+		return libvirtxml.StoragePool{}, libvirtError, isError
 	}
 
-	result.Response = true
-	result.Code = http.StatusOK
-	result.Data = storagePoolDetail
+	return result, libvirtError, false
 }
