@@ -9,7 +9,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Connect to qemu hypervisor via SSH tunnel and check the expected HTTP request method and convert the JSON request body to structure if any.
+// Connect to hypervisor via SSH tunnel and check the expected HTTP request method and convert the JSON request body to structure if any.
 // SSH tunnel work with Key-Based authentication. Please, create SSH Key on the host and copy it on the remote libvirt-daemon host
 // ~/.ssh/authorized_keys.
 //

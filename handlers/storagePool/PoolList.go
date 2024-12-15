@@ -15,14 +15,14 @@ import (
 func PoolList(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
 		result          []poolList.Data
-		qemuConnection  *libvirt.Connect
+		connection      *libvirt.Connect
 		requestBodyData poolList.Request
 		httpBody        poolList.Response
 		libvirtError    libvirt.Error
 		isError         bool
 	)
 
-	qemuConnection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodGet,
+	connection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodGet,
 		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
 	if isError {
 		httpBody.Response = false
@@ -35,7 +35,7 @@ func PoolList(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer qemuConnection.Close()
+	defer connection.Close()
 
 	option, errorParseOptionToUint := strconv.ParseUint(requestBodyData.Option, 10, 32)
 	if errorParseOptionToUint != nil {
@@ -75,7 +75,7 @@ func PoolList(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result, libvirtError, isError = storagePool.PoolList(qemuConnection, libvirt.ConnectListAllStoragePoolsFlags(option),
+	result, libvirtError, isError = storagePool.PoolList(connection, libvirt.ConnectListAllStoragePoolsFlags(option),
 		libvirt.StorageXMLFlags(inactive))
 	if isError {
 		httpBody.Response = false

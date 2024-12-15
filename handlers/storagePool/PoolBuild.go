@@ -13,14 +13,14 @@ import (
 
 func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		qemuConnection  *libvirt.Connect
+		connection      *libvirt.Connect
 		requestBodyData poolBuild.Request
 		httpBody        poolBuild.Response
 		libvirtError    libvirt.Error
 		isError         bool
 	)
 
-	qemuConnection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPatch,
+	connection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPatch,
 		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
 	if isError {
 		httpBody.Response = false
@@ -33,9 +33,9 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer qemuConnection.Close()
+	defer connection.Close()
 
-	libvirtError, isError = storagePool.PoolBuild(qemuConnection, requestBodyData.Uuid, requestBodyData.Option)
+	libvirtError, isError = storagePool.PoolBuild(connection, requestBodyData.Uuid, requestBodyData.Option)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
