@@ -7,7 +7,6 @@ import (
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolList"
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 // Collect the list of storage pools, and allocate an array to store those objects.
@@ -40,24 +39,17 @@ func PoolList(connection *libvirt.Connect, option libvirt.ConnectListAllStorageP
 			}
 			defer storagePools[index].Free()
 
-			storagePoolXml, errorGetStoragePoolXml := storagePools[index].GetXMLDesc(storageXmlFlags)
-			if errorGetStoragePoolXml != nil {
-				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolXml)
+			storagePoolDetail, errorGetStoragePoolDetail, isError := PoolDetail(storagePools[index], storageXmlFlags)
+			if isError {
+				temboLog.ErrorLogging("failed get pool detail", errorGetStoragePoolDetail)
 				return
 			}
 
-			var storagePool libvirtxml.StoragePool
-			errorUnmarshallStoragePool := storagePool.Unmarshal(storagePoolXml)
-			if errorUnmarshallStoragePool != nil {
-				temboLog.ErrorLogging("failed Unmarshal XML of pool", errorUnmarshallStoragePool)
-				return
-			}
-
-			result[index].Uuid = storagePool.UUID
-			result[index].Name = storagePool.Name
-			result[index].Capacity = *storagePool.Capacity
-			result[index].Allocation = *storagePool.Allocation
-			result[index].Available = *storagePool.Available
+			result[index].Uuid = storagePoolDetail.UUID
+			result[index].Name = storagePoolDetail.Name
+			result[index].Capacity = *storagePoolDetail.Capacity
+			result[index].Allocation = *storagePoolDetail.Allocation
+			result[index].Available = *storagePoolDetail.Available
 		}(i)
 		go func(index int) {
 			defer waitGroup.Done()

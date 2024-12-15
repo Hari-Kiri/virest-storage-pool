@@ -48,6 +48,9 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	utils.NoContentResponseBuilder(responseWriter)
+	httpBody.Response = true
+	httpBody.Code = http.StatusOK
+	httpBody.Data.Uuid = requestBodyData.Uuid
+	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 	temboLog.InfoLogging("pool", requestBodyData.Uuid, "built [", request.URL.Path, "]")
 }
