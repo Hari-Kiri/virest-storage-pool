@@ -6,7 +6,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Build the underlying storage pool. Return libvirt.error nil on success, or libvirt.error not nil upon failure
+// Starts an inactive storage pool. Return libvirt.error nil on success, or libvirt.error not nil upon failure
 func PoolCreate(connection *libvirt.Connect, poolUuid string, option libvirt.StoragePoolCreateFlags) (libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
