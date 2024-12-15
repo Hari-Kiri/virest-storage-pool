@@ -32,6 +32,7 @@ func main() {
 
 	// Make handler
 	goalMakeHandler.HandleRequest(storagePool.PoolList, "/pool-list")
+	goalMakeHandler.HandleRequest(storagePool.PoolDetail, "/pool-detail")
 	goalMakeHandler.HandleRequest(storagePool.PoolDefine, "/pool-define")
 	goalMakeHandler.HandleRequest(storagePool.PoolBuild, "/pool-build")
 	goalMakeHandler.HandleRequest(storagePool.PoolCreate, "/pool-create")
