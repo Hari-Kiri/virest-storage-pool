@@ -2,7 +2,6 @@ package storagePool
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
@@ -21,8 +20,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPost,
-		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
+	connection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPost, &requestBodyData)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)

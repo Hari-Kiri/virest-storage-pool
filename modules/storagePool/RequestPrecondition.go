@@ -24,7 +24,7 @@ import (
 // Notes for HTTP POST, PUT, PATCH and DELETE method:
 //
 // - This function always looking for request body for data and parse them to 'structure' parameter.
-func RequestPrecondition[RequestStructure utils.RequestStructure](httpRequest *http.Request, expectedRequestMethod string, connectionUri string, structure *RequestStructure) (*libvirt.Connect, libvirt.Error, bool) {
+func RequestPrecondition[RequestStructure utils.RequestStructure](httpRequest *http.Request, expectedRequestMethod string, structure *RequestStructure) (*libvirt.Connect, libvirt.Error, bool) {
 	var (
 		result                                          *libvirt.Connect
 		waitGroup                                       sync.WaitGroup
@@ -32,9 +32,18 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](httpRequest *h
 		isErrorConnect, isErrorPrepareRequest           bool
 	)
 
+	if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
+		return nil, libvirt.Error{
+			Code:    libvirt.ERR_INVALID_CONN,
+			Domain:  libvirt.FROM_NET,
+			Message: "hypervisor uri not exist on request header",
+			Level:   2,
+		}, true
+	}
+
 	waitGroup.Add(2)
 	go func() {
-		result, libvirtErrorConnect, isErrorConnect = utils.NewConnectWithAuth(connectionUri, nil, 0)
+		result, libvirtErrorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
 		if isErrorConnect {
 			temboLog.ErrorLogging(
 				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
