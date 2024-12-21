@@ -20,6 +20,10 @@ import (
 // - Every structure field data type must be string, so You must convert it to the right data type before You use it.
 //
 // - Untested for array query argument.
+//
+// Notes for HTTP POST, PUT, PATCH and DELETE method:
+//
+// - This function always looking for request body for data and parse them to 'structure' parameter.
 func RequestPrecondition[RequestStructure utils.RequestStructure](httpRequest *http.Request, expectedRequestMethod string, connectionUri string, structure *RequestStructure) (*libvirt.Connect, libvirt.Error, bool) {
 	var (
 		result                                          *libvirt.Connect
