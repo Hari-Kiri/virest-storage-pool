@@ -9,4 +9,9 @@ require (
 	libvirt.org/go/libvirtxml v1.10009.0
 )
 
-require github.com/Hari-Kiri/virest-utilities v0.1.6
+require (
+	github.com/Hari-Kiri/virest-utilities v0.1.7
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+)
+
+require golang.org/x/crypto v0.31.0 // indirect
