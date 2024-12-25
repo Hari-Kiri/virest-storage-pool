@@ -71,7 +71,7 @@ func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed list storage pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed get pool detail [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return

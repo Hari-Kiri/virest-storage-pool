@@ -49,7 +49,7 @@ func PoolDelete(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to build pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed to delete pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return

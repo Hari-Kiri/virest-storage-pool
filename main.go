@@ -37,6 +37,7 @@ func main() {
 	goalMakeHandler.HandleRequest(storagePool.PoolDefine, "/storage-pool/define")
 	goalMakeHandler.HandleRequest(storagePool.PoolBuild, "/storage-pool/build")
 	goalMakeHandler.HandleRequest(storagePool.PoolCreate, "/storage-pool/create")
+	goalMakeHandler.HandleRequest(storagePool.PoolAutostart, "/storage-pool/autostart")
 	goalMakeHandler.HandleRequest(storagePool.PoolDestroy, "/storage-pool/destroy")
 	goalMakeHandler.HandleRequest(storagePool.PoolUndefine, "/storage-pool/undefine")
 	goalMakeHandler.HandleRequest(storagePool.PoolDelete, "/storage-pool/delete")
