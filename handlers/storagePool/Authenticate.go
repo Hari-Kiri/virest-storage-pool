@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/Hari-Kiri/temboLog"
-	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/authenticate"
 	"github.com/Hari-Kiri/virest-utilities/utils"
+	"github.com/Hari-Kiri/virest-utilities/utils/auth"
 	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
 )
@@ -22,8 +22,8 @@ func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 		isError      bool
 	)
 
-	jwtLifetimeMinute, errorParseJwtLifetimeMinute := strconv.Atoi(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_MINUTE"))
-	if errorParseJwtLifetimeMinute != nil {
+	jwtLifetimeSeconds, errorParseJwtLifetimeSeconds := strconv.Atoi(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS"))
+	if errorParseJwtLifetimeSeconds != nil {
 		libvirtError = libvirt.Error{
 			Code:    libvirt.ERR_INTERNAL_ERROR,
 			Domain:  libvirt.FROM_AUTH,
@@ -41,10 +41,10 @@ func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result, libvirtError, isError = storagePool.Authenticate(
+	result, libvirtError, isError = auth.BasicAuth(
 		request,
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
-		time.Minute*time.Duration(jwtLifetimeMinute),
+		time.Second*time.Duration(jwtLifetimeSeconds),
 		jwt.SigningMethodHS512,
 		[]byte(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_SIGNATURE_KEY")),
 	)
