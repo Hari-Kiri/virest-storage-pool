@@ -31,11 +31,12 @@ func main() {
 	}
 
 	// Make handler
-	goalMakeHandler.HandleRequest(storagePool.PoolList, "/pool-list")
-	goalMakeHandler.HandleRequest(storagePool.PoolDetail, "/pool-detail")
-	goalMakeHandler.HandleRequest(storagePool.PoolDefine, "/pool-define")
-	goalMakeHandler.HandleRequest(storagePool.PoolBuild, "/pool-build")
-	goalMakeHandler.HandleRequest(storagePool.PoolCreate, "/pool-create")
-	goalMakeHandler.HandleRequest(storagePool.PoolUndefine, "/pool-undefine")
+	goalMakeHandler.HandleRequest(storagePool.Authenticate, "/storage-pool/authenticate")
+	goalMakeHandler.HandleRequest(storagePool.PoolList, "/storage-pool/list")
+	goalMakeHandler.HandleRequest(storagePool.PoolDetail, "/storage-pool/detail")
+	goalMakeHandler.HandleRequest(storagePool.PoolDefine, "/storage-pool/define")
+	goalMakeHandler.HandleRequest(storagePool.PoolBuild, "/storage-pool/build")
+	goalMakeHandler.HandleRequest(storagePool.PoolCreate, "/storage-pool/create")
+	goalMakeHandler.HandleRequest(storagePool.PoolUndefine, "/storage-pool/undefine")
 	goalMakeHandler.Serve(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"), portFromEnv)
 }

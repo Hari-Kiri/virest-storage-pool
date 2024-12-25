@@ -8,6 +8,7 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"github.com/Hari-Kiri/virest-utilities/utils"
+	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
 )
 
@@ -20,8 +21,14 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodPatch,
-		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
+	connection, libvirtError, isError = storagePool.RequestPrecondition(
+		request,
+		http.MethodGet,
+		&requestBodyData,
+		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
+		jwt.SigningMethodHS512,
+		[]byte(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_SIGNATURE_KEY")),
+	)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)

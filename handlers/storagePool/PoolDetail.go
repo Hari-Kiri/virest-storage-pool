@@ -9,6 +9,7 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDetail"
 	"github.com/Hari-Kiri/virest-utilities/utils"
+	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -23,8 +24,14 @@ func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(request, http.MethodGet,
-		os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), &requestBodyData)
+	connection, libvirtError, isError = storagePool.RequestPrecondition(
+		request,
+		http.MethodGet,
+		&requestBodyData,
+		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
+		jwt.SigningMethodHS512,
+		[]byte(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_SIGNATURE_KEY")),
+	)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
@@ -74,5 +81,5 @@ func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data = result
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("listing pool on hypervisor", os.Getenv("VIREST_STORAGE_POOL_CONNECTION_URI"), "[", request.URL.Path, "]")
+	temboLog.InfoLogging("get pool detail:", requestBodyData.Uuid, "[", request.URL.Path, "]")
 }
