@@ -6,17 +6,17 @@ import (
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
-	"github.com/Hari-Kiri/virest-storage-pool/structures/poolCreate"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolAutostart"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
 )
 
-func PoolCreate(responseWriter http.ResponseWriter, request *http.Request) {
+func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
 		connection      *libvirt.Connect
-		requestBodyData poolCreate.Request
-		httpBody        poolCreate.Response
+		requestBodyData poolAutostart.Request
+		httpBody        poolAutostart.Response
 		libvirtError    libvirt.Error
 		isError         bool
 	)
@@ -42,14 +42,14 @@ func PoolCreate(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	libvirtError, isError = storagePool.PoolCreate(connection, requestBodyData.Uuid, requestBodyData.Option)
+	libvirtError, isError = storagePool.PoolAutostart(connection, requestBodyData.Uuid, requestBodyData.Autostart)
 	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to create pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed to set pool '"+requestBodyData.Uuid+"' autostart status [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
@@ -59,5 +59,5 @@ func PoolCreate(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data.Uuid = requestBodyData.Uuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("pool", requestBodyData.Uuid, "created [", request.URL.Path, "]")
+	temboLog.InfoLogging("set pool", "'"+requestBodyData.Uuid+"'", "autostart status [", request.URL.Path, "]")
 }
