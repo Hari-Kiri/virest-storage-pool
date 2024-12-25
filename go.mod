@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/Hari-Kiri/virest-utilities v0.1.7
+	github.com/Hari-Kiri/virest-utilities v0.1.9
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 )
 
