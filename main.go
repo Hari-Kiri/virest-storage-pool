@@ -39,5 +39,6 @@ func main() {
 	goalMakeHandler.HandleRequest(storagePool.PoolCreate, "/storage-pool/create")
 	goalMakeHandler.HandleRequest(storagePool.PoolDestroy, "/storage-pool/destroy")
 	goalMakeHandler.HandleRequest(storagePool.PoolUndefine, "/storage-pool/undefine")
+	goalMakeHandler.HandleRequest(storagePool.PoolDelete, "/storage-pool/delete")
 	goalMakeHandler.Serve(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"), portFromEnv)
 }

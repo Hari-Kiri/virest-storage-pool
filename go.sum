@@ -14,6 +14,8 @@ github.com/Hari-Kiri/virest-utilities v0.1.11 h1:tl5KxVt9j46+VMEsWGe5LmmTPKqqtAs
 github.com/Hari-Kiri/virest-utilities v0.1.11/go.mod h1:dYF5iRBzhHgUaNndeOmtyb/M5ktu8DQrnOlZSIme3X4=
 github.com/Hari-Kiri/virest-utilities v0.1.12 h1:bldkuqxZGoSNKguPxaj3j3xj7LmlT8nb2qecETynOk0=
 github.com/Hari-Kiri/virest-utilities v0.1.12/go.mod h1:yASNj1+YZzvNto8hQEEYUwfNVvEvswSa+CufwvNAUTU=
+github.com/Hari-Kiri/virest-utilities v0.1.13 h1:+IaILwKcRxJc1WtN+/s5wQnYSG3jBv7u87tC+s47UPI=
+github.com/Hari-Kiri/virest-utilities v0.1.13/go.mod h1:09lBJOxkmdRtShMmUjVJP+NSs65UfOPXBTG37MJPquM=
 github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 golang.org/x/crypto v0.31.0 h1:ihbySMvVjLAeSH1IbfcRTkD/iNscyz8rGzjF/E5hV6U=
