@@ -49,7 +49,7 @@ func PoolCreate(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = libvirtError
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to build pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed to create pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			libvirtError.Message,
 		)
 		return
