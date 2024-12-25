@@ -23,7 +23,7 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 
 	connection, libvirtError, isError = storagePool.RequestPrecondition(
 		request,
-		http.MethodPatch,
+		http.MethodDelete,
 		&requestBodyData,
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
 		jwt.SigningMethodHS512,
