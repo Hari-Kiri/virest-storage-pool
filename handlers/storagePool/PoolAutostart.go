@@ -59,5 +59,5 @@ func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data.Uuid = requestBodyData.Uuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("set pool", requestBodyData.Uuid, "autostart [", request.URL.Path, "]")
+	temboLog.InfoLogging("set pool '", requestBodyData.Uuid, "' autostart [", request.URL.Path, "]")
 }
