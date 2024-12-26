@@ -2,7 +2,6 @@ package poolInfo
 
 import (
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 type Response struct {
@@ -13,12 +12,12 @@ type Response struct {
 }
 
 type Info struct {
-	Name       string                     `json:"name"`
-	Uuid       string                     `json:"uuid"`
-	State      libvirt.StoragePoolState   `json:"state"`
-	Persistent bool                       `json:"persistent"`
-	Autostart  bool                       `json:"autostart"`
-	Capacity   libvirtxml.StoragePoolSize `json:"capacity"`
-	Allocation libvirtxml.StoragePoolSize `json:"allocation"`
-	Available  libvirtxml.StoragePoolSize `json:"available"`
+	Name       string                   `json:"name"`
+	Uuid       string                   `json:"uuid"`
+	State      libvirt.StoragePoolState `json:"state"`
+	Persistent bool                     `json:"persistent"`
+	Autostart  bool                     `json:"autostart"`
+	Capacity   uint64                   `json:"capacity"`
+	Allocation uint64                   `json:"allocation"`
+	Available  uint64                   `json:"available"`
 }
