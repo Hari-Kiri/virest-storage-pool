@@ -2,10 +2,8 @@ github.com/Hari-Kiri/goalMakeHandler v0.1.3 h1:Wt3KxGTjqJcSNce9xu/nhizjg5TDJJzOJ
 github.com/Hari-Kiri/goalMakeHandler v0.1.3/go.mod h1:3b93Wce6WBshvJh+9IrVVPOm7ZcjsrTWHNH++cvYtZA=
 github.com/Hari-Kiri/temboLog v0.1.3 h1:B38Sfv5IbClT96r+gZg8vay2WTzVWsFwoodkbDa3b+A=
 github.com/Hari-Kiri/temboLog v0.1.3/go.mod h1:UtbAKK/Aw/eNQLA8Gp2S+K9JH0u9bD3JaAmNNgzs6Fs=
-github.com/Hari-Kiri/virest-utilities v0.1.15 h1:IVz31/oVeTEuzpJilvYNbj0bFU/x8K3D8f2CBMhBqR8=
-github.com/Hari-Kiri/virest-utilities v0.1.15/go.mod h1:rVbyaLbmIrJhIS6Vu6RpBqPT/iJfpkfiTIS/0PSvViw=
-github.com/Hari-Kiri/virest-utilities v0.1.16 h1:ZkD4Su0n1DoJpip7HbLlp8r1GQHRwkadgguheHsuS8U=
-github.com/Hari-Kiri/virest-utilities v0.1.16/go.mod h1:dCULPCrB+Lt0aeqs0PmCSPvl0hfTbbeoK6yg/CbTO0s=
+github.com/Hari-Kiri/virest-utilities v0.1.17 h1:S1hBlI7Al4rADrd5MYGRMGqV/ohIVVUgVw7gJh+yaAg=
+github.com/Hari-Kiri/virest-utilities v0.1.17/go.mod h1:2MZW8liBcsPakXOBoft6zYkFrIZ8fNtwID48fs1dXlc=
 github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 golang.org/x/crypto v0.31.0 h1:ihbySMvVjLAeSH1IbfcRTkD/iNscyz8rGzjF/E5hV6U=
