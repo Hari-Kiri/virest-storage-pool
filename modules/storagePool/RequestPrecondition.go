@@ -8,6 +8,7 @@ import (
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/Hari-Kiri/virest-utilities/utils/auth"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
 )
@@ -37,7 +38,7 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	applicationName string,
 	jwtSigningMethod *jwt.SigningMethodHMAC,
 	jwtSignatureKey []byte,
-) (*libvirt.Connect, libvirt.Error, bool) {
+) (virest.Connection, virest.Error, bool) {
 	var (
 		result                                          *libvirt.Connect
 		waitGroup                                       sync.WaitGroup
@@ -52,20 +53,24 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 		jwtSignatureKey,
 	)
 	if isErrorAuth {
-		return nil, libvirt.Error{
-			Code:    libvirt.ERR_AUTH_FAILED,
-			Domain:  libvirt.FROM_NET,
-			Message: fmt.Sprintf("authentication failed: %s", libvirtErrorAuth.Message),
-			Level:   libvirt.ERR_ERROR,
+		return virest.Connection{}, virest.Error{
+			Error: libvirt.Error{
+				Code:    libvirt.ERR_AUTH_FAILED,
+				Domain:  libvirt.FROM_NET,
+				Message: fmt.Sprintf("authentication failed: %s", libvirtErrorAuth.Message),
+				Level:   libvirt.ERR_ERROR,
+			},
 		}, true
 	}
 
 	if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
-		return nil, libvirt.Error{
-			Code:    libvirt.ERR_INVALID_CONN,
-			Domain:  libvirt.FROM_NET,
-			Message: "hypervisor uri not exist on request header",
-			Level:   libvirt.ERR_ERROR,
+		return virest.Connection{}, virest.Error{
+			Error: libvirt.Error{
+				Code:    libvirt.ERR_INVALID_CONN,
+				Domain:  libvirt.FROM_NET,
+				Message: "hypervisor uri not exist on request header",
+				Level:   libvirt.ERR_ERROR,
+			},
 		}, true
 	}
 
@@ -94,12 +99,16 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	waitGroup.Wait()
 
 	if isErrorConnect {
-		return nil, libvirtErrorConnect, isErrorConnect
+		return virest.Connection{}, virest.Error{
+			Error: libvirtErrorConnect,
+		}, isErrorConnect
 	}
 	if isErrorPrepareRequest {
 		result.Close()
-		return nil, libvirtErrorPrepareRequest, isErrorPrepareRequest
+		return virest.Connection{}, virest.Error{
+			Error: libvirtErrorPrepareRequest,
+		}, isErrorPrepareRequest
 	}
 
-	return result, libvirt.Error{}, false
+	return virest.Connection{Connect: result}, virest.Error{}, false
 }
