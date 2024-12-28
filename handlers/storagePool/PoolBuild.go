@@ -9,19 +9,15 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolBuild"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
-	"libvirt.org/go/libvirt"
 )
 
 func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		connection      *libvirt.Connect
 		requestBodyData poolBuild.Request
 		httpBody        poolBuild.Response
-		libvirtError    libvirt.Error
-		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPatch,
 		&requestBodyData,
@@ -31,26 +27,26 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 	)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorRequestPrecondition.Code)
+		httpBody.Error = errorRequestPrecondition
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorRequestPrecondition.Message,
 		)
 		return
 	}
 	defer connection.Close()
 
-	libvirtError, isError = storagePool.PoolBuild(connection, requestBodyData.Uuid, requestBodyData.Option)
+	errorPoolBuild, isError := storagePool.PoolBuild(connection, requestBodyData.Uuid, requestBodyData.Option)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorPoolBuild.Code)
+		httpBody.Error = errorPoolBuild
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"failed to build pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorPoolBuild.Message,
 		)
 		return
 	}
