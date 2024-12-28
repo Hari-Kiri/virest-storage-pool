@@ -19,7 +19,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 
 	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
-		http.MethodPatch,
+		http.MethodPost,
 		&requestBodyData,
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
 		jwt.SigningMethodHS512,
