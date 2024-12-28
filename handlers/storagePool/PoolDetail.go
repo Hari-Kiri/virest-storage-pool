@@ -11,12 +11,11 @@ import (
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		result          libvirtxml.StoragePool
+		result          poolDetail.Detail
 		connection      *libvirt.Connect
 		requestBodyData poolDetail.Request
 		httpBody        poolDetail.Response

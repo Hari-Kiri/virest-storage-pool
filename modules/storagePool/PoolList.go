@@ -39,7 +39,7 @@ func PoolList(connection *libvirt.Connect, option libvirt.ConnectListAllStorageP
 			}
 			defer storagePools[index].Free()
 
-			storagePoolDetail, errorGetStoragePoolDetail, isError := poolDetail(storagePools[index], storageXmlFlags)
+			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePools[index], storageXmlFlags)
 			if isError {
 				temboLog.ErrorLogging("failed get pool detail", errorGetStoragePoolDetail)
 				return

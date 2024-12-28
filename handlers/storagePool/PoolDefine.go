@@ -14,7 +14,7 @@ import (
 
 func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		result          string
+		result          poolDefine.Uuid
 		connection      *libvirt.Connect
 		requestBodyData poolDefine.Request
 		httpBody        poolDefine.Response
@@ -58,7 +58,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 
 	httpBody.Response = true
 	httpBody.Code = http.StatusCreated
-	httpBody.Data.Uuid = result
+	httpBody.Data = result
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 	temboLog.InfoLogging("new pool defined with uuid:", result, "[", request.URL.Path, "]")
 }

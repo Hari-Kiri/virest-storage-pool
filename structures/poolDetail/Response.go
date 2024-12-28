@@ -6,8 +6,12 @@ import (
 )
 
 type Response struct {
-	Response bool                   `json:"response"`
-	Code     int                    `json:"code"`
-	Data     libvirtxml.StoragePool `json:"data"`
-	Error    libvirt.Error          `json:"error"`
+	Response bool          `json:"response"`
+	Code     int           `json:"code"`
+	Data     Detail        `json:"data"`
+	Error    libvirt.Error `json:"error"`
+}
+
+type Detail struct {
+	libvirtxml.StoragePool
 }

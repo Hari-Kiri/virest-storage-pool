@@ -3,6 +3,7 @@ package storagePool
 import (
 	"fmt"
 
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -10,7 +11,7 @@ import (
 // Define new storage pool using json formatted data with option as define flags.
 // The option with UInteger 1 will validate the JSON document against libvirt schema, while the option with UInteger 0 does nothing.
 // Upon success, the UUID of the newly defined pool will be returned.
-func PoolDefine(connection *libvirt.Connect, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (string, libvirt.Error, bool) {
+func PoolDefine(connection *libvirt.Connect, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (poolDefine.Uuid, libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
 		isError      bool
@@ -21,7 +22,7 @@ func PoolDefine(connection *libvirt.Connect, storagePool libvirtxml.StoragePool,
 	libvirtError, isError = errorGetLibvirtXml.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed to create pool config xml: %s", libvirtError.Message)
-		return "", libvirtError, isError
+		return poolDefine.Uuid{}, libvirtError, isError
 	}
 
 	// Define pool
@@ -29,7 +30,7 @@ func PoolDefine(connection *libvirt.Connect, storagePool libvirtxml.StoragePool,
 	libvirtError, isError = errorDefinePool.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed to define new pool: %s", libvirtError.Message)
-		return "", libvirtError, isError
+		return poolDefine.Uuid{}, libvirtError, isError
 	}
 	defer definePool.Free()
 
@@ -38,8 +39,10 @@ func PoolDefine(connection *libvirt.Connect, storagePool libvirtxml.StoragePool,
 	libvirtError, isError = errorGetDefinedPoolUuid.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed to get defined pool UUID: %s", libvirtError.Message)
-		return "", libvirtError, isError
+		return poolDefine.Uuid{}, libvirtError, isError
 	}
 
-	return definedPoolUuid, libvirtError, false
+	return poolDefine.Uuid{
+		Uuid: definedPoolUuid,
+	}, libvirtError, false
 }

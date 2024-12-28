@@ -5,6 +5,8 @@ import (
 
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
+
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDetail"
 )
 
 // Fetch an XML document describing all aspects of the storage pool.
@@ -16,7 +18,7 @@ import (
 // Get detail when pool in inactive state:
 //
 //	libvirtStorageXMLFlags = 1
-func poolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageXMLFlags libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
+func getPoolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageXMLFlags libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
 		isError      bool
@@ -49,7 +51,7 @@ func poolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageXMLF
 // Get detail when pool in inactive state:
 //
 //	libvirtStorageXMLFlags = 1
-func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
+func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.StorageXMLFlags) (poolDetail.Detail, libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
 		isError      bool
@@ -59,16 +61,18 @@ func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.Sto
 	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
-		return libvirtxml.StoragePool{}, libvirtError, isError
+		return poolDetail.Detail{}, libvirtError, isError
 	}
 	defer storagePoolObject.Free()
 
 	var result libvirtxml.StoragePool
-	result, libvirtError, isError = poolDetail(*storagePoolObject, option)
+	result, libvirtError, isError = getPoolDetail(*storagePoolObject, option)
 	if isError {
 		libvirtError.Message = fmt.Sprintf("failed get storage pool using object: %s", libvirtError.Message)
-		return libvirtxml.StoragePool{}, libvirtError, isError
+		return poolDetail.Detail{}, libvirtError, isError
 	}
 
-	return result, libvirtError, false
+	return poolDetail.Detail{
+		StoragePool: result,
+	}, libvirtError, false
 }
