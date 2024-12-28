@@ -6,6 +6,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
+// Configure the storage pool to be automatically started when the host machine boots.
 func PoolAutostart(connection *libvirt.Connect, poolUuid string, autostart bool) (libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
