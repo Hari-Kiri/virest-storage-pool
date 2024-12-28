@@ -46,25 +46,21 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 		jwtSignatureKey,
 	)
 	if isErrorAuth {
-		return virest.Connection{}, virest.Error{
-			Error: libvirt.Error{
-				Code:    libvirt.ERR_AUTH_FAILED,
-				Domain:  libvirt.FROM_NET,
-				Message: fmt.Sprintf("authentication failed: %s", libvirtErrorAuth.Message),
-				Level:   libvirt.ERR_ERROR,
-			},
-		}, true
+		return virest.Connection{}, virest.Error{Error: libvirt.Error{
+			Code:    libvirt.ERR_AUTH_FAILED,
+			Domain:  libvirt.FROM_NET,
+			Message: fmt.Sprintf("authentication failed: %s", libvirtErrorAuth.Message),
+			Level:   libvirt.ERR_ERROR,
+		}}, true
 	}
 
 	if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
-		return virest.Connection{}, virest.Error{
-			Error: libvirt.Error{
-				Code:    libvirt.ERR_INVALID_CONN,
-				Domain:  libvirt.FROM_NET,
-				Message: "hypervisor uri not exist on request header",
-				Level:   libvirt.ERR_ERROR,
-			},
-		}, true
+		return virest.Connection{}, virest.Error{Error: libvirt.Error{
+			Code:    libvirt.ERR_INVALID_CONN,
+			Domain:  libvirt.FROM_NET,
+			Message: "hypervisor uri not exist on request header",
+			Level:   libvirt.ERR_ERROR,
+		}}, true
 	}
 
 	var (
