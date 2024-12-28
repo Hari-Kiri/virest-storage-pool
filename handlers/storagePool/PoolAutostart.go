@@ -38,8 +38,8 @@ func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	errorSetAutostart, isError := storagePool.PoolAutostart(connection, requestBodyData.Uuid, requestBodyData.Autostart)
-	if isError {
+	errorSetAutostart, isErrorSetAutostart := storagePool.PoolAutostart(connection, requestBodyData.Uuid, requestBodyData.Autostart)
+	if isErrorSetAutostart {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorSetAutostart.Code)
 		httpBody.Error = errorSetAutostart

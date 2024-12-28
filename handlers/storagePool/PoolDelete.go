@@ -38,8 +38,8 @@ func PoolDelete(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	errorPoolDelete, isError := storagePool.PoolDelete(connection, requestBodyData.Uuid, requestBodyData.Option)
-	if isError {
+	errorPoolDelete, isErrorPoolDelete := storagePool.PoolDelete(connection, requestBodyData.Uuid, requestBodyData.Option)
+	if isErrorPoolDelete {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolDelete.Code)
 		httpBody.Error = errorPoolDelete

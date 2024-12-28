@@ -38,8 +38,8 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	result, errorPoolDefine, isError := storagePool.PoolDefine(connection, requestBodyData.StoragePool, requestBodyData.Option)
-	if isError {
+	result, errorPoolDefine, isErrorPoolDefine := storagePool.PoolDefine(connection, requestBodyData.StoragePool, requestBodyData.Option)
+	if isErrorPoolDefine {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolDefine.Code)
 		httpBody.Error = errorPoolDefine
