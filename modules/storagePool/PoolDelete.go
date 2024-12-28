@@ -3,31 +3,32 @@ package storagePool
 import (
 	"fmt"
 
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
 // Delete the underlying pool resources. This is a non-recoverable operation.
-func PoolDelete(connection *libvirt.Connect, poolUuid string, option libvirt.StoragePoolDeleteFlags) (libvirt.Error, bool) {
+func PoolDelete(connection virest.Connection, poolUuid string, option libvirt.StoragePoolDeleteFlags) (virest.Error, bool) {
 	var (
-		libvirtError libvirt.Error
-		isError      bool
+		virestError virest.Error
+		isError     bool
 	)
 
 	// Get libvirt storage pool object
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
-		return libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)
+		return virestError, isError
 	}
 	defer storagePoolObject.Free()
 
 	// Build pool
-	libvirtError, isError = storagePoolObject.Delete(option).(libvirt.Error)
+	virestError.Error, isError = storagePoolObject.Delete(option).(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed to delete pool: %s", libvirtError.Message)
-		return libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed to delete pool: %s", virestError.Message)
+		return virestError, isError
 	}
 
-	return libvirtError, false
+	return virestError, false
 }
