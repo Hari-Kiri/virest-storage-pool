@@ -39,13 +39,6 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	jwtSigningMethod *jwt.SigningMethodHMAC,
 	jwtSignatureKey []byte,
 ) (virest.Connection, virest.Error, bool) {
-	var (
-		result                                          *libvirt.Connect
-		waitGroup                                       sync.WaitGroup
-		libvirtErrorConnect, libvirtErrorPrepareRequest libvirt.Error
-		isErrorConnect, isErrorPrepareRequest           bool
-	)
-
 	libvirtErrorAuth, isErrorAuth := auth.BearerTokenAuth(
 		httpRequest,
 		applicationName,
@@ -74,24 +67,30 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 		}, true
 	}
 
+	var (
+		result                                virest.Connection
+		waitGroup                             sync.WaitGroup
+		errorConnect, errorPrepareRequest     virest.Error
+		isErrorConnect, isErrorPrepareRequest bool
+	)
 	waitGroup.Add(2)
 	go func() {
-		result, libvirtErrorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
+		result, errorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
 		if isErrorConnect {
 			temboLog.ErrorLogging(
 				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				libvirtErrorConnect.Message,
+				errorConnect.Message,
 			)
 		}
 		defer waitGroup.Done()
 	}()
 	go func() {
 		// Prepare request
-		libvirtErrorPrepareRequest, isErrorPrepareRequest = utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
+		errorPrepareRequest, isErrorPrepareRequest = utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
 		if isErrorPrepareRequest {
 			temboLog.ErrorLogging(
 				"failed preparing request [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				libvirtErrorPrepareRequest.Message,
+				errorPrepareRequest.Message,
 			)
 		}
 		defer waitGroup.Done()
@@ -99,16 +98,12 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	waitGroup.Wait()
 
 	if isErrorConnect {
-		return virest.Connection{}, virest.Error{
-			Error: libvirtErrorConnect,
-		}, isErrorConnect
+		return virest.Connection{}, errorConnect, isErrorConnect
 	}
 	if isErrorPrepareRequest {
 		result.Close()
-		return virest.Connection{}, virest.Error{
-			Error: libvirtErrorPrepareRequest,
-		}, isErrorPrepareRequest
+		return virest.Connection{}, errorPrepareRequest, isErrorPrepareRequest
 	}
 
-	return virest.Connection{Connect: result}, virest.Error{}, false
+	return result, virest.Error{}, false
 }

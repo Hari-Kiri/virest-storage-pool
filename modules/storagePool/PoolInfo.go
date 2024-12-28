@@ -6,25 +6,28 @@ import (
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolInfo"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
 // Get volatile information about the storage pool such as free space / usage summary
-func PoolInfo(connection *libvirt.Connect, uuid string) (poolInfo.Info, libvirt.Error, bool) {
+func PoolInfo(connection virest.Connection, uuid string) (poolInfo.Info, virest.Error, bool) {
 	var (
-		waitGroup    sync.WaitGroup
-		libvirtError libvirt.Error
-		isError      bool
+		virestError virest.Error
+		isError     bool
 	)
 
 	storagePool, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(uuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed list storage pool: %s", libvirtError.Message)
-		return poolInfo.Info{}, libvirtError, true
+		virestError.Message = fmt.Sprintf("failed list storage pool: %s", virestError.Message)
+		return poolInfo.Info{}, virestError, true
 	}
 
-	var result poolInfo.Info
+	var (
+		result    poolInfo.Info
+		waitGroup sync.WaitGroup
+	)
 	result.Uuid = uuid
 	waitGroup.Add(4)
 	go func() {
@@ -104,5 +107,5 @@ func PoolInfo(connection *libvirt.Connect, uuid string) (poolInfo.Info, libvirt.
 	}()
 	waitGroup.Wait()
 
-	return result, libvirtError, false
+	return result, virestError, false
 }

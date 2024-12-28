@@ -9,20 +9,15 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolInfo"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
-	"libvirt.org/go/libvirt"
 )
 
 func PoolInfo(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		result          poolInfo.Info
-		connection      *libvirt.Connect
 		requestBodyData poolInfo.Request
 		httpBody        poolInfo.Response
-		libvirtError    libvirt.Error
-		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,
@@ -32,26 +27,26 @@ func PoolInfo(responseWriter http.ResponseWriter, request *http.Request) {
 	)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorRequestPrecondition.Code)
+		httpBody.Error = errorRequestPrecondition
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorRequestPrecondition.Message,
 		)
 		return
 	}
 	defer connection.Close()
 
-	result, libvirtError, isError = storagePool.PoolInfo(connection, requestBodyData.Uuid)
-	if isError {
+	result, errorGetPoolInfo, isErrorGetPoolInfo := storagePool.PoolInfo(connection, requestBodyData.Uuid)
+	if isErrorGetPoolInfo {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorGetPoolInfo.Code)
+		httpBody.Error = errorGetPoolInfo
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"failed to get pool info '"+requestBodyData.Uuid+"' [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorGetPoolInfo.Message,
 		)
 		return
 	}

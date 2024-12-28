@@ -6,26 +6,27 @@ import (
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolList"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
 // Collect the list of storage pools, and allocate an array to store those objects.
 // Normally, all storage pools are returned; however, flags can be used to filter the results for a smaller list of targeted pools.
 // More about option UInteger [https://libvirt.org/html/libvirt-libvirt-storage.html#virConnectListAllStoragePoolsFlags].
-func PoolList(connection *libvirt.Connect, option libvirt.ConnectListAllStoragePoolsFlags, storageXmlFlags libvirt.StorageXMLFlags) ([]poolList.Data, libvirt.Error, bool) {
+func PoolList(connection virest.Connection, option uint, storageXmlFlags uint) ([]poolList.Data, virest.Error, bool) {
 	var (
-		waitGroup    sync.WaitGroup
-		libvirtError libvirt.Error
-		isError      bool
+		virestError virest.Error
+		isError     bool
 	)
 
-	storagePools, errorGetListOfStoragePool := connection.ListAllStoragePools(option)
-	libvirtError, isError = errorGetListOfStoragePool.(libvirt.Error)
+	storagePools, errorGetListOfStoragePool := connection.ListAllStoragePools(libvirt.ConnectListAllStoragePoolsFlags(option))
+	virestError.Error, isError = errorGetListOfStoragePool.(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed list storage pool: %s", libvirtError.Message)
-		return nil, libvirtError, true
+		virestError.Message = fmt.Sprintf("failed list storage pool: %s", virestError.Message)
+		return nil, virestError, true
 	}
 
+	var waitGroup sync.WaitGroup
 	result := make([]poolList.Data, len(storagePools))
 	waitGroup.Add(len(storagePools) * 4)
 	for i := 0; i < len(storagePools); i++ {
@@ -39,7 +40,7 @@ func PoolList(connection *libvirt.Connect, option libvirt.ConnectListAllStorageP
 			}
 			defer storagePools[index].Free()
 
-			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePools[index], storageXmlFlags)
+			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePools[index], libvirt.StorageXMLFlags(storageXmlFlags))
 			if isError {
 				temboLog.ErrorLogging("failed get pool detail", errorGetStoragePoolDetail)
 				return
@@ -108,5 +109,5 @@ func PoolList(connection *libvirt.Connect, option libvirt.ConnectListAllStorageP
 	}
 	waitGroup.Wait()
 
-	return result, libvirtError, false
+	return result, virestError, false
 }

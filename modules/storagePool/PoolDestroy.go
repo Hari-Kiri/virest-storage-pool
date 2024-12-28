@@ -3,32 +3,33 @@ package storagePool
 import (
 	"fmt"
 
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
 // Destroy an active storage pool. This will deactivate the pool on the host, but keep any persistent config associated with it.
 // If it has a persistent config it can later be restarted with storagePool.PoolCreate().
-func PoolDestroy(connection *libvirt.Connect, poolUuid string) (libvirt.Error, bool) {
+func PoolDestroy(connection virest.Connection, poolUuid string) (virest.Error, bool) {
 	var (
-		libvirtError libvirt.Error
-		isError      bool
+		virestError virest.Error
+		isError     bool
 	)
 
 	// Get libvirt storage pool object
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
-		return libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)
+		return virestError, isError
 	}
 	defer storagePoolObject.Free()
 
 	// Build pool
-	libvirtError, isError = storagePoolObject.Destroy().(libvirt.Error)
+	virestError.Error, isError = storagePoolObject.Destroy().(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed to destroy pool: %s", libvirtError.Message)
-		return libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed to destroy pool: %s", virestError.Message)
+		return virestError, isError
 	}
 
-	return libvirtError, false
+	return virestError, false
 }

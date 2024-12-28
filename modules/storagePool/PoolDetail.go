@@ -7,6 +7,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDetail"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 )
 
 // Fetch an XML document describing all aspects of the storage pool.
@@ -51,28 +52,28 @@ func getPoolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageX
 // Get detail when pool in inactive state:
 //
 //	libvirtStorageXMLFlags = 1
-func PoolDetail(connection *libvirt.Connect, poolUuid string, option libvirt.StorageXMLFlags) (poolDetail.Detail, libvirt.Error, bool) {
+func PoolDetail(connection virest.Connection, poolUuid string, option uint) (poolDetail.Detail, virest.Error, bool) {
 	var (
-		libvirtError libvirt.Error
-		isError      bool
+		virestError virest.Error
+		isError     bool
 	)
 
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
-		return poolDetail.Detail{}, libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)
+		return poolDetail.Detail{}, virestError, isError
 	}
 	defer storagePoolObject.Free()
 
 	var result libvirtxml.StoragePool
-	result, libvirtError, isError = getPoolDetail(*storagePoolObject, option)
+	result, virestError.Error, isError = getPoolDetail(*storagePoolObject, libvirt.StorageXMLFlags(option))
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed get storage pool using object: %s", libvirtError.Message)
-		return poolDetail.Detail{}, libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed get storage pool using object: %s", virestError.Message)
+		return poolDetail.Detail{}, virestError, isError
 	}
 
 	return poolDetail.Detail{
 		StoragePool: result,
-	}, libvirtError, false
+	}, virestError, false
 }
