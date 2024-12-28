@@ -9,19 +9,15 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolAutostart"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
-	"libvirt.org/go/libvirt"
 )
 
 func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		connection      *libvirt.Connect
 		requestBodyData poolAutostart.Request
 		httpBody        poolAutostart.Response
-		libvirtError    libvirt.Error
-		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPatch,
 		&requestBodyData,
@@ -31,26 +27,26 @@ func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 	)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorRequestPrecondition.Code)
+		httpBody.Error = errorRequestPrecondition
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorRequestPrecondition.Message,
 		)
 		return
 	}
 	defer connection.Close()
 
-	libvirtError, isError = storagePool.PoolAutostart(connection, requestBodyData.Uuid, requestBodyData.Autostart)
+	errorSetAutostart, isError := storagePool.PoolAutostart(connection, requestBodyData.Uuid, requestBodyData.Autostart)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorSetAutostart.Code)
+		httpBody.Error = errorSetAutostart
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"failed to set pool '"+requestBodyData.Uuid+"' autostart status [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorSetAutostart.Message,
 		)
 		return
 	}

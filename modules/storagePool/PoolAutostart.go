@@ -8,7 +8,7 @@ import (
 )
 
 // Configure the storage pool to be automatically started when the host machine boots.
-func PoolAutostart(connection *libvirt.Connect, poolUuid string, autostart bool) (virest.Error, bool) {
+func PoolAutostart(connection virest.Connection, poolUuid string, autostart bool) (virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
