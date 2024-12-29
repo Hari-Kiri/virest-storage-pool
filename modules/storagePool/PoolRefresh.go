@@ -7,8 +7,9 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Undefine storage pool using their UUID string.
-func PoolUndefine(connection virest.Connection, poolUuid string) (virest.Error, bool) {
+// Request that the pool refresh its list of volumes. This may involve communicating with a remote server,
+// and/or initializing new devices at the OS layer.
+func PoolRefresh(connection virest.Connection, poolUuid string) (virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
@@ -22,9 +23,11 @@ func PoolUndefine(connection virest.Connection, poolUuid string) (virest.Error, 
 	}
 	defer storagePoolObject.Free()
 
-	virestError.Error, isError = storagePoolObject.Undefine().(libvirt.Error)
+	// extra flags; not used yet, so callers should always pass 0
+	// https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolRefresh
+	virestError.Error, isError = storagePoolObject.Refresh(0).(libvirt.Error)
 	if isError {
-		virestError.Message = fmt.Sprintf("failed to undefine pool: %s", virestError.Message)
+		virestError.Message = fmt.Sprintf("failed to refresh pool: %s", virestError.Message)
 		return virestError, isError
 	}
 

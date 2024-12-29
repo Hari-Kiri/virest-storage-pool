@@ -6,20 +6,20 @@ import (
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
-	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolRefresh"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
 )
 
-func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
+func PoolRefresh(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		requestBodyData poolUndefine.Request
-		httpBody        poolUndefine.Response
+		requestBodyData poolRefresh.Request
+		httpBody        poolRefresh.Response
 	)
 
 	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
-		http.MethodDelete,
+		http.MethodGet,
 		&requestBodyData,
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
 		jwt.SigningMethodHS512,
@@ -38,19 +38,22 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	errorPoolUndefine, isErrorPoolUndefine := storagePool.PoolUndefine(connection, requestBodyData.Uuid)
-	if isErrorPoolUndefine {
+	errorPoolRefresh, isErrorPoolRefresh := storagePool.PoolRefresh(connection, requestBodyData.Uuid)
+	if isErrorPoolRefresh {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(errorPoolUndefine.Code)
-		httpBody.Error = errorPoolUndefine
+		httpBody.Code = utils.HttpErrorCode(errorPoolRefresh.Code)
+		httpBody.Error = errorPoolRefresh
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to undefine pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			errorPoolUndefine.Message,
+			"failed to refresh pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			errorPoolRefresh.Message,
 		)
 		return
 	}
 
-	utils.NoContentResponseBuilder(responseWriter)
-	temboLog.InfoLogging("pool", requestBodyData.Uuid, "undefined [", request.URL.Path, "]")
+	httpBody.Response = true
+	httpBody.Code = http.StatusOK
+	httpBody.Data.Uuid = requestBodyData.Uuid
+	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
+	temboLog.InfoLogging("pool", requestBodyData.Uuid, "have been refreshed [", request.URL.Path, "]")
 }
