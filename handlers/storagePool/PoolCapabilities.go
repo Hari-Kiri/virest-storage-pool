@@ -45,7 +45,7 @@ func PoolCapabilities(responseWriter http.ResponseWriter, request *http.Request)
 		httpBody.Error = errorGetPoolCapabilities
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to refresh pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed to get pool capabilities [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			errorGetPoolCapabilities.Message,
 		)
 		return
