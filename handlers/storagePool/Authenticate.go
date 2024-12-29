@@ -3,7 +3,6 @@ package storagePool
 import (
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/Hari-Kiri/temboLog"
@@ -16,46 +15,38 @@ import (
 
 func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		httpBody     authenticate.Response
-		result       string
-		libvirtError libvirt.Error
-		isError      bool
+		httpBody authenticate.Response
+		result   string
 	)
 
-	jwtLifetimeSeconds, errorParseJwtLifetimeSeconds := strconv.Atoi(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS"))
-	if errorParseJwtLifetimeSeconds != nil {
-		libvirtError = libvirt.Error{
-			Code:    libvirt.ERR_INTERNAL_ERROR,
-			Domain:  libvirt.FROM_AUTH,
-			Message: "environment variable for JWT lifetime not number or not exist",
-			Level:   libvirt.ERR_ERROR,
-		}
+	jwtLifetimeSeconds, errorParseJwtLifetimeSeconds, isError := utils.StringToUint32(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS"))
+	if isError {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(libvirt.ERR_INVALID_ARG)
-		httpBody.Error = libvirtError
+		httpBody.Error = errorParseJwtLifetimeSeconds
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorParseJwtLifetimeSeconds.Message,
 		)
 		return
 	}
 
-	result, libvirtError, isError = auth.BasicAuth(
+	result, errorBasicAuth, isErrorBasicAuth := auth.BasicAuth(
 		request,
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
 		time.Second*time.Duration(jwtLifetimeSeconds),
 		jwt.SigningMethodHS512,
 		[]byte(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_SIGNATURE_KEY")),
 	)
-	if isError {
+	if isErrorBasicAuth {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorBasicAuth.Code)
+		httpBody.Error = errorBasicAuth
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorBasicAuth.Message,
 		)
 		return
 	}

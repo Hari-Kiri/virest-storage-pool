@@ -3,30 +3,30 @@ package storagePool
 import (
 	"fmt"
 
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
-func PoolAutostart(connection *libvirt.Connect, poolUuid string, autostart bool) (libvirt.Error, bool) {
+// Configure the storage pool to be automatically started when the host machine boots.
+func PoolAutostart(connection virest.Connection, poolUuid string, autostart bool) (virest.Error, bool) {
 	var (
-		libvirtError libvirt.Error
-		isError      bool
+		virestError virest.Error
+		isError     bool
 	)
 
-	// Get libvirt storage pool object
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
-	libvirtError, isError = errorGetStoragePoolObject.(libvirt.Error)
+	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed get storage pool object: %s", libvirtError.Message)
-		return libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)
+		return virestError, isError
 	}
 	defer storagePoolObject.Free()
 
-	// Build pool
-	libvirtError, isError = storagePoolObject.SetAutostart(autostart).(libvirt.Error)
+	virestError.Error, isError = storagePoolObject.SetAutostart(autostart).(libvirt.Error)
 	if isError {
-		libvirtError.Message = fmt.Sprintf("failed to set pool '%s' autostart status: %s", poolUuid, libvirtError.Message)
-		return libvirtError, isError
+		virestError.Message = fmt.Sprintf("failed to set pool '%s' autostart status: %s", poolUuid, virestError.Message)
+		return virestError, isError
 	}
 
-	return libvirtError, false
+	return virestError, false
 }

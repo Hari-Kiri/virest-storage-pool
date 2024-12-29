@@ -33,6 +33,7 @@ func main() {
 	// Make handler
 	goalMakeHandler.HandleRequest(storagePool.Authenticate, "/storage-pool/authenticate")
 	goalMakeHandler.HandleRequest(storagePool.PoolList, "/storage-pool/list")
+	goalMakeHandler.HandleRequest(storagePool.PoolInfo, "/storage-pool/info")
 	goalMakeHandler.HandleRequest(storagePool.PoolDetail, "/storage-pool/detail")
 	goalMakeHandler.HandleRequest(storagePool.GetUid, "/storage-pool/get-uid")
 	goalMakeHandler.HandleRequest(storagePool.GetGid, "/storage-pool/get-gid")
@@ -43,5 +44,7 @@ func main() {
 	goalMakeHandler.HandleRequest(storagePool.PoolDestroy, "/storage-pool/destroy")
 	goalMakeHandler.HandleRequest(storagePool.PoolUndefine, "/storage-pool/undefine")
 	goalMakeHandler.HandleRequest(storagePool.PoolDelete, "/storage-pool/delete")
+	goalMakeHandler.HandleRequest(storagePool.PoolRefresh, "/storage-pool/refresh")
+	goalMakeHandler.HandleRequest(storagePool.PoolCapabilities, "/storage-pool/capabilities")
 	goalMakeHandler.Serve(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"), portFromEnv)
 }

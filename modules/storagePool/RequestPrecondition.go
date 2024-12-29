@@ -8,6 +8,7 @@ import (
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/Hari-Kiri/virest-utilities/utils/auth"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"github.com/golang-jwt/jwt"
 	"libvirt.org/go/libvirt"
 )
@@ -37,14 +38,7 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	applicationName string,
 	jwtSigningMethod *jwt.SigningMethodHMAC,
 	jwtSignatureKey []byte,
-) (*libvirt.Connect, libvirt.Error, bool) {
-	var (
-		result                                          *libvirt.Connect
-		waitGroup                                       sync.WaitGroup
-		libvirtErrorConnect, libvirtErrorPrepareRequest libvirt.Error
-		isErrorConnect, isErrorPrepareRequest           bool
-	)
-
+) (virest.Connection, virest.Error, bool) {
 	libvirtErrorAuth, isErrorAuth := auth.BearerTokenAuth(
 		httpRequest,
 		applicationName,
@@ -52,41 +46,47 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 		jwtSignatureKey,
 	)
 	if isErrorAuth {
-		return nil, libvirt.Error{
+		return virest.Connection{}, virest.Error{Error: libvirt.Error{
 			Code:    libvirt.ERR_AUTH_FAILED,
 			Domain:  libvirt.FROM_NET,
 			Message: fmt.Sprintf("authentication failed: %s", libvirtErrorAuth.Message),
 			Level:   libvirt.ERR_ERROR,
-		}, true
+		}}, true
 	}
 
 	if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
-		return nil, libvirt.Error{
+		return virest.Connection{}, virest.Error{Error: libvirt.Error{
 			Code:    libvirt.ERR_INVALID_CONN,
 			Domain:  libvirt.FROM_NET,
 			Message: "hypervisor uri not exist on request header",
 			Level:   libvirt.ERR_ERROR,
-		}, true
+		}}, true
 	}
 
+	var (
+		result                                virest.Connection
+		waitGroup                             sync.WaitGroup
+		errorConnect, errorPrepareRequest     virest.Error
+		isErrorConnect, isErrorPrepareRequest bool
+	)
 	waitGroup.Add(2)
 	go func() {
-		result, libvirtErrorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
+		result, errorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
 		if isErrorConnect {
 			temboLog.ErrorLogging(
 				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				libvirtErrorConnect.Message,
+				errorConnect.Message,
 			)
 		}
 		defer waitGroup.Done()
 	}()
 	go func() {
 		// Prepare request
-		libvirtErrorPrepareRequest, isErrorPrepareRequest = utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
+		errorPrepareRequest, isErrorPrepareRequest = utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
 		if isErrorPrepareRequest {
 			temboLog.ErrorLogging(
 				"failed preparing request [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				libvirtErrorPrepareRequest.Message,
+				errorPrepareRequest.Message,
 			)
 		}
 		defer waitGroup.Done()
@@ -94,12 +94,12 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	waitGroup.Wait()
 
 	if isErrorConnect {
-		return nil, libvirtErrorConnect, isErrorConnect
+		return virest.Connection{}, errorConnect, isErrorConnect
 	}
 	if isErrorPrepareRequest {
 		result.Close()
-		return nil, libvirtErrorPrepareRequest, isErrorPrepareRequest
+		return virest.Connection{}, errorPrepareRequest, isErrorPrepareRequest
 	}
 
-	return result, libvirt.Error{}, false
+	return result, virest.Error{}, false
 }

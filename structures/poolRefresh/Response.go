@@ -1,4 +1,4 @@
-package poolCreate
+package poolRefresh
 
 import "github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 

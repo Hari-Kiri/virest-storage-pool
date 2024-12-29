@@ -9,19 +9,15 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolUndefine"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
-	"libvirt.org/go/libvirt"
 )
 
 func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		connection      *libvirt.Connect
 		requestBodyData poolUndefine.Request
 		httpBody        poolUndefine.Response
-		libvirtError    libvirt.Error
-		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodDelete,
 		&requestBodyData,
@@ -31,31 +27,30 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 	)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorRequestPrecondition.Code)
+		httpBody.Error = errorRequestPrecondition
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorRequestPrecondition.Message,
 		)
 		return
 	}
 	defer connection.Close()
 
-	libvirtError, isError = storagePool.PoolUndefine(connection, requestBodyData.Uuid)
-	if isError {
+	errorPoolUndefine, isErrorPoolUndefine := storagePool.PoolUndefine(connection, requestBodyData.Uuid)
+	if isErrorPoolUndefine {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorPoolUndefine.Code)
+		httpBody.Error = errorPoolUndefine
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"failed to undefine pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorPoolUndefine.Message,
 		)
 		return
 	}
 
-	// Http ok response
 	utils.NoContentResponseBuilder(responseWriter)
 	temboLog.InfoLogging("pool", requestBodyData.Uuid, "undefined [", request.URL.Path, "]")
 }

@@ -6,20 +6,20 @@ import (
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
-	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDestroy"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolInfo"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
 )
 
-func PoolDestroy(responseWriter http.ResponseWriter, request *http.Request) {
+func PoolInfo(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		requestBodyData poolDestroy.Request
-		httpBody        poolDestroy.Response
+		requestBodyData poolInfo.Request
+		httpBody        poolInfo.Response
 	)
 
 	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
-		http.MethodPatch,
+		http.MethodGet,
 		&requestBodyData,
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
 		jwt.SigningMethodHS512,
@@ -38,22 +38,22 @@ func PoolDestroy(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 
-	errorPoolDestroy, isErrorPoolDestroy := storagePool.PoolDestroy(connection, requestBodyData.Uuid)
-	if isErrorPoolDestroy {
+	result, errorGetPoolInfo, isErrorGetPoolInfo := storagePool.PoolInfo(connection, requestBodyData.Uuid)
+	if isErrorGetPoolInfo {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(errorPoolDestroy.Code)
-		httpBody.Error = errorPoolDestroy
+		httpBody.Code = utils.HttpErrorCode(errorGetPoolInfo.Code)
+		httpBody.Error = errorGetPoolInfo
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"failed to destroy pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			errorPoolDestroy.Message,
+			"failed to get pool info '"+requestBodyData.Uuid+"' [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			errorGetPoolInfo.Message,
 		)
 		return
 	}
 
 	httpBody.Response = true
 	httpBody.Code = http.StatusOK
-	httpBody.Data.Uuid = requestBodyData.Uuid
+	httpBody.Data = result
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("pool", requestBodyData.Uuid, "destroyed [", request.URL.Path, "]")
+	temboLog.InfoLogging("get pool info with uuid:", result.Uuid, "[", request.URL.Path, "]")
 }

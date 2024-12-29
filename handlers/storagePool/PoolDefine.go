@@ -9,20 +9,15 @@ import (
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/golang-jwt/jwt"
-	"libvirt.org/go/libvirt"
 )
 
 func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		result          string
-		connection      *libvirt.Connect
 		requestBodyData poolDefine.Request
 		httpBody        poolDefine.Response
-		libvirtError    libvirt.Error
-		isError         bool
 	)
 
-	connection, libvirtError, isError = storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPost,
 		&requestBodyData,
@@ -32,33 +27,33 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	)
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorRequestPrecondition.Code)
+		httpBody.Error = errorRequestPrecondition
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorRequestPrecondition.Message,
 		)
 		return
 	}
 	defer connection.Close()
 
-	result, libvirtError, isError = storagePool.PoolDefine(connection, requestBodyData.StoragePool, requestBodyData.Option)
-	if isError {
+	result, errorPoolDefine, isErrorPoolDefine := storagePool.PoolDefine(connection, requestBodyData.StoragePool, requestBodyData.Option)
+	if isErrorPoolDefine {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirtError.Code)
-		httpBody.Error = libvirtError
+		httpBody.Code = utils.HttpErrorCode(errorPoolDefine.Code)
+		httpBody.Error = errorPoolDefine
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
 			"failed to define pool [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
-			libvirtError.Message,
+			errorPoolDefine.Message,
 		)
 		return
 	}
 
 	httpBody.Response = true
 	httpBody.Code = http.StatusCreated
-	httpBody.Data.Uuid = result
+	httpBody.Data = result
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 	temboLog.InfoLogging("new pool defined with uuid:", result, "[", request.URL.Path, "]")
 }
