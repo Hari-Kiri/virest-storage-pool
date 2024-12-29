@@ -51,7 +51,6 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	// Http ok response
 	utils.NoContentResponseBuilder(responseWriter)
 	temboLog.InfoLogging("pool", requestBodyData.Uuid, "undefined [", request.URL.Path, "]")
 }
