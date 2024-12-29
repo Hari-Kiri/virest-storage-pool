@@ -9,9 +9,8 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Prior creating a storage pool (for instance via virStoragePoolCreateXML or virStoragePoolDefineXML)
-// it may be suitable to know what pool types are supported along with the file/disk formats for each
-// pool.
+// Prior creating a storage pool it may be suitable to know what pool types are supported along with the file/disk
+// formats for each pool.
 func PoolCapabilities(connection virest.Connection) (poolCapabilities.StoragepoolCapabilities, virest.Error, bool) {
 	var (
 		virestError virest.Error
