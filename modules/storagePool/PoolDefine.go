@@ -18,7 +18,6 @@ func PoolDefine(connection virest.Connection, storagePool libvirtxml.StoragePool
 		isError     bool
 	)
 
-	// Convert request body to libvirt xml
 	libvirtXml, errorGetLibvirtXml := storagePool.Marshal()
 	virestError.Error, isError = errorGetLibvirtXml.(libvirt.Error)
 	if isError {
@@ -26,7 +25,6 @@ func PoolDefine(connection virest.Connection, storagePool libvirtxml.StoragePool
 		return poolDefine.Uuid{}, virestError, isError
 	}
 
-	// Define pool
 	definePool, errorDefinePool := connection.StoragePoolDefineXML(libvirtXml, option)
 	virestError.Error, isError = errorDefinePool.(libvirt.Error)
 	if isError {
@@ -35,7 +33,6 @@ func PoolDefine(connection virest.Connection, storagePool libvirtxml.StoragePool
 	}
 	defer definePool.Free()
 
-	// Get defined pool UUID
 	definedPoolUuid, errorGetDefinedPoolUuid := definePool.GetUUIDString()
 	virestError.Error, isError = errorGetDefinedPoolUuid.(libvirt.Error)
 	if isError {

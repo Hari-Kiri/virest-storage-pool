@@ -10,15 +10,6 @@ import (
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 )
 
-// Fetch an XML document describing all aspects of the storage pool.
-//
-// Get detail when pool in active state:
-//
-//	libvirtStorageXMLFlags = 0
-//
-// Get detail when pool in inactive state:
-//
-//	libvirtStorageXMLFlags = 1
 func getPoolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageXMLFlags libvirt.StorageXMLFlags) (libvirtxml.StoragePool, libvirt.Error, bool) {
 	var (
 		libvirtError libvirt.Error
@@ -44,14 +35,6 @@ func getPoolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageX
 }
 
 // Fetch an XML document describing all aspects of the storage pool.
-//
-// Get detail when pool in active state:
-//
-//	libvirtStorageXMLFlags = 0
-//
-// Get detail when pool in inactive state:
-//
-//	libvirtStorageXMLFlags = 1
 func PoolDetail(connection virest.Connection, poolUuid string, option uint) (poolDetail.Detail, virest.Error, bool) {
 	var (
 		virestError virest.Error

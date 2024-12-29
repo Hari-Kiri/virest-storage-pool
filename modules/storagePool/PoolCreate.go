@@ -7,14 +7,13 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Starts an inactive storage pool. Return libvirt.error nil on success, or libvirt.error not nil upon failure
+// Starts an inactive storage pool.
 func PoolCreate(connection virest.Connection, poolUuid string, option libvirt.StoragePoolCreateFlags) (virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	// Get libvirt storage pool object
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
@@ -23,7 +22,6 @@ func PoolCreate(connection virest.Connection, poolUuid string, option libvirt.St
 	}
 	defer storagePoolObject.Free()
 
-	// Create pool
 	virestError.Error, isError = storagePoolObject.Create(option).(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed to create pool: %s", virestError.Message)

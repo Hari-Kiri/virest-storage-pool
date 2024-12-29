@@ -14,7 +14,6 @@ func PoolDelete(connection virest.Connection, poolUuid string, option libvirt.St
 		isError     bool
 	)
 
-	// Get libvirt storage pool object
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
@@ -23,7 +22,6 @@ func PoolDelete(connection virest.Connection, poolUuid string, option libvirt.St
 	}
 	defer storagePoolObject.Free()
 
-	// Build pool
 	virestError.Error, isError = storagePoolObject.Delete(option).(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed to delete pool: %s", virestError.Message)

@@ -7,7 +7,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Undefine storage pool using their UUID string. Return libvirt.error nil on success, or libvirt.error not nil upon failure.
+// Undefine storage pool using their UUID string.
 func PoolUndefine(connection virest.Connection, poolUuid string) (virest.Error, bool) {
 	var (
 		virestError virest.Error

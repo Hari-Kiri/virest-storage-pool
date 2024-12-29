@@ -14,7 +14,6 @@ func PoolAutostart(connection virest.Connection, poolUuid string, autostart bool
 		isError     bool
 	)
 
-	// Get libvirt storage pool object
 	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
@@ -23,7 +22,6 @@ func PoolAutostart(connection virest.Connection, poolUuid string, autostart bool
 	}
 	defer storagePoolObject.Free()
 
-	// Build pool
 	virestError.Error, isError = storagePoolObject.SetAutostart(autostart).(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed to set pool '%s' autostart status: %s", poolUuid, virestError.Message)
