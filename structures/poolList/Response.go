@@ -1,15 +1,16 @@
 package poolList
 
 import (
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
 
 type Response struct {
-	Response bool          `json:"response"`
-	Code     int           `json:"code"`
-	Data     []Data        `json:"data"`
-	Error    libvirt.Error `json:"error"`
+	Response bool         `json:"response"`
+	Code     int          `json:"code"`
+	Data     []Data       `json:"data"`
+	Error    virest.Error `json:"error"`
 }
 
 type Data struct {
