@@ -6,8 +6,12 @@ import (
 )
 
 type Response struct {
-	Response bool               `json:"response"`
-	Code     int                `json:"code"`
-	Data     structures.Sources `json:"data"`
-	Error    virest.Error       `json:"error"`
+	Response bool         `json:"response"`
+	Code     int          `json:"code"`
+	Data     Sources      `json:"data"`
+	Error    virest.Error `json:"error"`
+}
+
+type Sources struct {
+	structures.Sources `json:"sources"`
 }
