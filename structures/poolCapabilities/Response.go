@@ -13,5 +13,5 @@ type Response struct {
 }
 
 type StoragepoolCapabilities struct {
-	libvirtxml.StoragepoolCapabilities `json:"uuid"`
+	libvirtxml.StoragepoolCapabilities `json:"capabilities"`
 }
