@@ -27,7 +27,7 @@ func PoolCapabilities(connection virest.Connection) (poolCapabilities.Storagepoo
 	}
 
 	var result libvirtxml.StoragepoolCapabilities
-	virestError.Error, isError = result.Unmarshal(storagepoolCapabilities).(libvirt.Error)
+	virestError, isError = result.Unmarshal(storagepoolCapabilities)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed parse storage pool capabilities: %s", virestError.Message)
 		return poolCapabilities.StoragepoolCapabilities{}, virestError, isError
