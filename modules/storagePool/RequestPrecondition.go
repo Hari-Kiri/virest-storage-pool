@@ -62,6 +62,8 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	)
 	waitGroup.Add(2)
 	go func() {
+		defer waitGroup.Done()
+
 		if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
 			isErrorConnect = true
 			errorConnect.Code = libvirt.ERR_INVALID_CONN
@@ -82,10 +84,10 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 				errorConnect.Message,
 			)
 		}
-		defer waitGroup.Done()
 	}()
 	go func() {
-		// Prepare request
+		defer waitGroup.Done()
+
 		errorPrepareRequest, isErrorPrepareRequest = utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
 		if isErrorPrepareRequest {
 			temboLog.ErrorLogging(
@@ -93,7 +95,6 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 				errorPrepareRequest.Message,
 			)
 		}
-		defer waitGroup.Done()
 	}()
 	waitGroup.Wait()
 
