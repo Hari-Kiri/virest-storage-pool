@@ -10,7 +10,6 @@ import (
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/Hari-Kiri/virest-utilities/utils/auth"
 	"github.com/golang-jwt/jwt"
-	"libvirt.org/go/libvirt"
 )
 
 func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
@@ -22,7 +21,7 @@ func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 	jwtLifetimeSeconds, errorParseJwtLifetimeSeconds, isError := utils.StringToUint32(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS"))
 	if isError {
 		httpBody.Response = false
-		httpBody.Code = utils.HttpErrorCode(libvirt.ERR_INVALID_ARG)
+		httpBody.Code = utils.HttpErrorCode(errorParseJwtLifetimeSeconds.Code)
 		httpBody.Error = errorParseJwtLifetimeSeconds
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
