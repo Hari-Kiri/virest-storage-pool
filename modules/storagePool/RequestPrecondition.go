@@ -54,15 +54,6 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 		}}, true
 	}
 
-	if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
-		return virest.Connection{}, virest.Error{Error: libvirt.Error{
-			Code:    libvirt.ERR_INVALID_CONN,
-			Domain:  libvirt.FROM_NET,
-			Message: "hypervisor uri not exist on request header",
-			Level:   libvirt.ERR_ERROR,
-		}}, true
-	}
-
 	var (
 		result                                virest.Connection
 		waitGroup                             sync.WaitGroup
@@ -71,6 +62,19 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	)
 	waitGroup.Add(2)
 	go func() {
+		if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
+			isErrorConnect = true
+			errorConnect.Code = libvirt.ERR_INVALID_CONN
+			errorConnect.Domain = libvirt.FROM_NET
+			errorConnect.Message = "hypervisor uri not exist on request header"
+			errorConnect.Level = libvirt.ERR_ERROR
+			temboLog.ErrorLogging(
+				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
+				errorConnect.Message,
+			)
+			return
+		}
+
 		result, errorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
 		if isErrorConnect {
 			temboLog.ErrorLogging(
