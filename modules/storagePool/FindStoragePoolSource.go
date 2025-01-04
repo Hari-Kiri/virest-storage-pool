@@ -3,8 +3,8 @@ package storagePool
 import (
 	"fmt"
 
-	"github.com/Hari-Kiri/virest-storage-pool/structures"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/findStoragePoolSources"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/libvirtxml"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
@@ -15,16 +15,16 @@ import (
 // specifying where to look for the pools.
 //
 // srcSpec is not required for some types (e.g., those querying local storage resources only)
-func FindStoragePoolSource(connection virest.Connection, pooltype string, srcSpec structures.Source) (findStoragePoolSources.Sources, virest.Error, bool) {
+func FindStoragePoolSource(connection virest.Connection, pooltype string, srcSpec libvirtxml.Source) (findStoragePoolSources.Sources, virest.Error, bool) {
 	var (
+		srcSpecXml  string
 		virestError virest.Error
 		isError     bool
 	)
 
-	srcSpecXml, errorMarshalToXml := srcSpec.Marshal()
-	virestError.Error, isError = errorMarshalToXml.(libvirt.Error)
+	srcSpecXml, virestError, isError = srcSpec.Marshal()
 	if isError {
-		virestError.Message = fmt.Sprintf("failed to find potential storage pool sources: %s", virestError.Message)
+		virestError.Message = fmt.Sprintf("failed to parse source spec of the storage pool: %s", virestError.Message)
 		return findStoragePoolSources.Sources{}, virestError, isError
 	}
 
@@ -37,8 +37,8 @@ func FindStoragePoolSource(connection virest.Connection, pooltype string, srcSpe
 		return findStoragePoolSources.Sources{}, virestError, isError
 	}
 
-	var result structures.Sources
-	virestError.Error, isError = result.Unmarshal(discoverStoragePoolSources).(libvirt.Error)
+	var result libvirtxml.Sources
+	virestError, isError = result.Unmarshal(discoverStoragePoolSources)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed parse discovered storage pool sources: %s", virestError.Message)
 		return findStoragePoolSources.Sources{}, virestError, isError

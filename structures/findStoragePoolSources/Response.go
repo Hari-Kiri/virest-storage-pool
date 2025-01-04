@@ -1,7 +1,7 @@
 package findStoragePoolSources
 
 import (
-	"github.com/Hari-Kiri/virest-storage-pool/structures"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/libvirtxml"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 )
 
@@ -13,5 +13,5 @@ type Response struct {
 }
 
 type Sources struct {
-	structures.Sources `json:"sources"`
+	libvirtxml.Sources `json:"sources"`
 }
