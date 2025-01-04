@@ -32,6 +32,7 @@ func main() {
 
 	// Make handler
 	goalMakeHandler.HandleRequest(storagePool.Authenticate, "/storage-pool/authenticate")
+	goalMakeHandler.HandleRequest(storagePool.FindStoragePoolSource, "/storage-pool/find-storage-pool-sources")
 	goalMakeHandler.HandleRequest(storagePool.PoolList, "/storage-pool/list")
 	goalMakeHandler.HandleRequest(storagePool.PoolInfo, "/storage-pool/info")
 	goalMakeHandler.HandleRequest(storagePool.PoolDetail, "/storage-pool/detail")
