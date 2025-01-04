@@ -59,5 +59,5 @@ func FindStoragePoolSource(responseWriter http.ResponseWriter, request *http.Req
 	httpBody.Code = http.StatusOK
 	httpBody.Data = findStoragePoolSource
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("find potential pool", requestBodyData.Type, "sources [", request.URL.Path, "]")
+	temboLog.InfoLogging("found potential pool", requestBodyData.Type, "sources [", request.URL.Path, "]")
 }
