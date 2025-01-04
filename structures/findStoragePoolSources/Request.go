@@ -1,10 +1,14 @@
 package findStoragePoolSources
 
 import (
-	"libvirt.org/go/libvirtxml"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/libvirtxml"
 )
 
 type Request struct {
-	Type    string                       `json:"type"`
-	SrcSpec libvirtxml.StoragePoolSource `json:"srcSpec"`
+	Type    string `json:"type"`
+	SrcSpec Source `json:"srcSpec"`
+}
+
+type Source struct {
+	Source libvirtxml.Source `json:"source"`
 }
