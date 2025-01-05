@@ -25,7 +25,7 @@ func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = errorParseJwtLifetimeSeconds
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed parsing JWT lifetime seconds environment to uint32 [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			errorParseJwtLifetimeSeconds.Message,
 		)
 		return
@@ -44,7 +44,7 @@ func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody.Error = errorBasicAuth
 		utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
 		temboLog.ErrorLogging(
-			"request unexpected [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
+			"failed authenticate with basic auth [ "+request.URL.Path+" ], requested from "+request.RemoteAddr+":",
 			errorBasicAuth.Message,
 		)
 		return
