@@ -10,8 +10,11 @@ require (
 )
 
 require (
-	github.com/Hari-Kiri/virest-utilities v0.2.0
+	github.com/Hari-Kiri/virest-utilities v0.2.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 )
 
-require golang.org/x/crypto v0.31.0 // indirect
+require (
+	github.com/Hari-Kiri/virest-storage-volume v0.1.0-dev // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+)
