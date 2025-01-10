@@ -33,6 +33,8 @@ func Authenticate(responseWriter http.ResponseWriter, request *http.Request) {
 
 	result, errorBasicAuth, isErrorBasicAuth := auth.BasicAuth(
 		request,
+		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_BA_USER"),
+		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_BA_PASSWORD"),
 		os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"),
 		time.Second*time.Duration(jwtLifetimeSeconds),
 		jwt.SigningMethodHS512,
