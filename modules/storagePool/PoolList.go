@@ -30,6 +30,8 @@ func PoolList(connection virest.Connection, option uint, storageXmlFlags uint) (
 	result := make([]poolList.Data, len(storagePools))
 	waitGroup.Add(len(storagePools) * 4)
 	for i := 0; i < len(storagePools); i++ {
+		defer storagePools[i].Free()
+
 		go func(index int) {
 			defer waitGroup.Done()
 
