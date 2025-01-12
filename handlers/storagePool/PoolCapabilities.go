@@ -55,5 +55,5 @@ func PoolCapabilities(responseWriter http.ResponseWriter, request *http.Request)
 	httpBody.Code = http.StatusOK
 	httpBody.Data = poolCapabilities
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("get hypervisor", request.Header["Hypervisor-Uri"], "storage pool capabilities [", request.URL.Path, "]")
+	temboLog.InfoLogging("get hypervisor", request.Header["Hypervisor-Uri"][0], "storage pool capabilities [", request.URL.Path, "]")
 }

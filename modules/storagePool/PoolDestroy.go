@@ -24,10 +24,5 @@ func PoolDestroy(connection virest.Connection, poolUuid string) (virest.Error, b
 	defer storagePoolObject.Free()
 
 	virestError.Error, isError = storagePoolObject.Destroy().(libvirt.Error)
-	if isError {
-		virestError.Message = fmt.Sprintf("failed to destroy pool: %s", virestError.Message)
-		return virestError, isError
-	}
-
-	return virestError, false
+	return virestError, isError
 }
