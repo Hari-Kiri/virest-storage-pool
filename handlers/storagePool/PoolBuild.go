@@ -55,5 +55,5 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data.Uuid = requestBodyData.Uuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("pool", requestBodyData.Uuid, "built [", request.URL.Path, "]")
+	temboLog.InfoLogging("pool", requestBodyData.Uuid, "built on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }

@@ -42,5 +42,5 @@ func GetUid(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data.Uid = os.Getuid()
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("show uid for user", httpBody.Data.Uid, "[", request.URL.Path, "]")
+	temboLog.InfoLogging("show uid for user", httpBody.Data.Uid, "on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }

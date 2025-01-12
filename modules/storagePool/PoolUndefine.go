@@ -23,10 +23,5 @@ func PoolUndefine(connection virest.Connection, poolUuid string) (virest.Error, 
 	defer storagePoolObject.Free()
 
 	virestError.Error, isError = storagePoolObject.Undefine().(libvirt.Error)
-	if isError {
-		virestError.Message = fmt.Sprintf("failed to undefine pool: %s", virestError.Message)
-		return virestError, isError
-	}
-
-	return virestError, false
+	return virestError, isError
 }

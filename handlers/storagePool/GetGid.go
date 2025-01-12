@@ -42,5 +42,5 @@ func GetGid(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data.Gid = os.Getgid()
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("show gid for group", httpBody.Data.Gid, "[", request.URL.Path, "]")
+	temboLog.InfoLogging("show gid for group", httpBody.Data.Gid, "on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }

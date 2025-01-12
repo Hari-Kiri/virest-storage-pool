@@ -55,5 +55,5 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusCreated
 	httpBody.Data = result
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("new pool defined with uuid:", result, "[", request.URL.Path, "]")
+	temboLog.InfoLogging("new pool defined with uuid:", result, "on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }
