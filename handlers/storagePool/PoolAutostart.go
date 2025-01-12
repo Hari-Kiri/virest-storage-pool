@@ -55,5 +55,5 @@ func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data.Uuid = requestBodyData.Uuid
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("set pool", "'"+requestBodyData.Uuid+"'", "autostart status [", request.URL.Path, "]")
+	temboLog.InfoLogging("set pool", requestBodyData.Uuid, "autostart status on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }

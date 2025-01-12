@@ -52,5 +52,5 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	utils.NoContentResponseBuilder(responseWriter)
-	temboLog.InfoLogging("pool", requestBodyData.Uuid, "undefined [", request.URL.Path, "]")
+	temboLog.InfoLogging("pool", requestBodyData.Uuid, "undefined on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }

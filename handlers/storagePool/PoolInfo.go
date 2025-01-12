@@ -55,5 +55,5 @@ func PoolInfo(responseWriter http.ResponseWriter, request *http.Request) {
 	httpBody.Code = http.StatusOK
 	httpBody.Data = result
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("get pool info with uuid:", result.Uuid, "[", request.URL.Path, "]")
+	temboLog.InfoLogging("get pool info with uuid:", result.Uuid, "on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }

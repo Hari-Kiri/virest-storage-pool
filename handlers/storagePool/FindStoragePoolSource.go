@@ -59,5 +59,5 @@ func FindStoragePoolSource(responseWriter http.ResponseWriter, request *http.Req
 	httpBody.Code = http.StatusOK
 	httpBody.Data = findStoragePoolSource
 	utils.JsonResponseBuilder(httpBody, responseWriter, httpBody.Code)
-	temboLog.InfoLogging("found potential", requestBodyData.Type, "pool sources [", request.URL.Path, "]")
+	temboLog.InfoLogging("found potential", requestBodyData.Type, "pool sources on hypervisor", request.Header["Hypervisor-Uri"][0], "[", request.URL.Path, "]")
 }
