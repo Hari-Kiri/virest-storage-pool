@@ -23,10 +23,5 @@ func PoolBuild(connection virest.Connection, poolUuid string, option libvirt.Sto
 	defer storagePoolObject.Free()
 
 	virestError.Error, isError = storagePoolObject.Build(option).(libvirt.Error)
-	if isError {
-		virestError.Message = fmt.Sprintf("failed to build pool: %s", virestError.Message)
-		return virestError, isError
-	}
-
-	return virestError, false
+	return virestError, isError
 }

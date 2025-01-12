@@ -26,10 +26,5 @@ func PoolRefresh(connection virest.Connection, poolUuid string) (virest.Error, b
 	// extra flags; not used yet, so callers should always pass 0
 	// https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolRefresh
 	virestError.Error, isError = storagePoolObject.Refresh(0).(libvirt.Error)
-	if isError {
-		virestError.Message = fmt.Sprintf("failed to refresh pool: %s", virestError.Message)
-		return virestError, isError
-	}
-
-	return virestError, false
+	return virestError, isError
 }
