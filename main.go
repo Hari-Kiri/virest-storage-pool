@@ -8,6 +8,7 @@ import (
 	"github.com/Hari-Kiri/goalMakeHandler"
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/handlers/storagePool"
+	"libvirt.org/go/libvirt"
 )
 
 func main() {
@@ -30,6 +31,13 @@ func main() {
 		temboLog.FatalLogging("failed get port from env:", errorGetPortFromEnv)
 	}
 
+	temboLog.InfoLogging("registering a default event implementation based on the poll() system call...")
+	errorEventRegisterDefaultImpl := libvirt.EventRegisterDefaultImpl()
+	if errorEventRegisterDefaultImpl != nil {
+		temboLog.FatalLogging("failed registers a default event implementation based on the poll() system call:", errorEventRegisterDefaultImpl)
+	}
+	temboLog.InfoLogging("registering a default event implementation based on the poll() system call, success!")
+
 	// Make handler
 	goalMakeHandler.HandleRequest(storagePool.Authenticate, "/storage-pool/authenticate")
 	goalMakeHandler.HandleRequest(storagePool.FindStoragePoolSource, "/storage-pool/find-storage-pool-sources")
@@ -47,5 +55,6 @@ func main() {
 	goalMakeHandler.HandleRequest(storagePool.PoolDelete, "/storage-pool/delete")
 	goalMakeHandler.HandleRequest(storagePool.PoolRefresh, "/storage-pool/refresh")
 	goalMakeHandler.HandleRequest(storagePool.PoolCapabilities, "/storage-pool/capabilities")
+	goalMakeHandler.HandleRequest(storagePool.PoolEvent, "/storage-pool/event")
 	goalMakeHandler.Serve(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_NAME"), portFromEnv)
 }
