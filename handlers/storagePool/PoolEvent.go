@@ -69,8 +69,7 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	probing := true
-	for probing {
+	for {
 		if storagePool.PoolEventProbingResult.EventRefresh > 0 {
 			result.EventRefresh = storagePool.PoolEventProbingResult.EventRefresh
 			break
