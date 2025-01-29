@@ -13,6 +13,13 @@ type Response struct {
 }
 
 type Event struct {
-	EventRefresh   int                               `json:"eventRefresh"`
+
+	// Lifecycle event type default is 6, when occur a virStoragePoolEventLifecycleType (which
+	// is less than 6) is emitted during storage pool lifecycle events. See more about Storage
+	// Pool Event Type:
+	// https://libvirt.org/html/libvirt-libvirt-storage.html#virStoragePoolEventLifecycleType
 	EventLifecycle libvirt.StoragePoolEventLifecycle `json:"eventLifecycle"`
+
+	// Refresh event default is 0, when occur it will change to 1.
+	EventRefresh int `json:"eventRefresh"`
 }
