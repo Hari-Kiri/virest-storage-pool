@@ -3,18 +3,20 @@ package storagePool
 import (
 	"fmt"
 
+	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolEvent"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
-// Get the probing result. Run PoolEvent() before, to init event probe, or it will always
+// Get the probing result. Run  PoolEvent() before,  to init event probe, or  it will always
 // return invalid event.
 var PoolEventProbingResult poolEvent.Event
 
-// Init pool event probe and get the result using 'PoolEventProbingResult' variable.
-// Probing will be done until selected storage pool events (using types to define it)
-// occur.
+// Init pool event probe and get the result using 'PoolEventProbingResult' variable. Probing
+// will be  done until selected storage  pool events type  occur. Please registering default
+// event  implementation  using  'libvirt.EventRegisterDefaultImpl()' in main package before
+// initiate pool event probe using this function.
 //
 // types:
 //   - 0 = lifecycle
@@ -84,11 +86,13 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 
 	if types == 0 {
 		callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
-			connection *libvirt.Connect,
-			storagePoolObject *libvirt.StoragePool,
-			storagePoolEvent *libvirt.StoragePoolEventLifecycle,
+			c *libvirt.Connect,
+			n *libvirt.StoragePool,
+			event *libvirt.StoragePoolEventLifecycle,
 		) {
-			PoolEventProbingResult.EventLifecycle = *storagePoolEvent
+			PoolEventProbingResult.EventLifecycle = *event
+			virestError.Error, isError = connection.StoragePoolEventDeregister(callbackId).(libvirt.Error)
+			storagePoolEventDeregister(connection, callbackId)
 			eventRunDefaultImpl = false
 		})
 
@@ -97,10 +101,12 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 	}
 	if types == 1 {
 		callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
-			connection *libvirt.Connect,
-			storagePoolObject *libvirt.StoragePool,
+			c *libvirt.Connect,
+			n *libvirt.StoragePool,
 		) {
 			PoolEventProbingResult.EventRefresh = 1
+			virestError.Error, isError = connection.StoragePoolEventDeregister(callbackId).(libvirt.Error)
+			storagePoolEventDeregister(connection, callbackId)
 			eventRunDefaultImpl = false
 		})
 
@@ -108,12 +114,20 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 		return virestError, isError
 	}
 
-	if !eventRunDefaultImpl {
-		virestError.Error, isError = connection.StoragePoolEventDeregister(callbackId).(libvirt.Error)
-	}
+	return virestError, isError
+}
+
+func storagePoolEventDeregister(connection virest.Connection, callbackId int) {
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+
+	virestError.Error, isError = connection.StoragePoolEventDeregister(callbackId).(libvirt.Error)
 	if isError {
-		return virestError, isError
+		temboLog.ErrorLogging("failed to deregister:", virestError.Message)
+		return
 	}
 
-	return virestError, isError
+	temboLog.InfoLogging("deregister storage pool event callback with id:", callbackId)
 }
