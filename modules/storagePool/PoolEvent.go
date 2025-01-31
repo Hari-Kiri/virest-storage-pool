@@ -91,7 +91,7 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 			event *libvirt.StoragePoolEventLifecycle,
 		) {
 			PoolEventProbingResult.EventLifecycle = *event
-			storagePoolEventDeregister(connection, callbackId)
+			StoragePoolEventDeregister(connection, callbackId)
 			eventRunDefaultImpl = false
 		})
 
@@ -104,7 +104,7 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 			n *libvirt.StoragePool,
 		) {
 			PoolEventProbingResult.EventRefresh = 1
-			storagePoolEventDeregister(connection, callbackId)
+			StoragePoolEventDeregister(connection, callbackId)
 			eventRunDefaultImpl = false
 		})
 
@@ -115,7 +115,7 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 	return virestError, isError
 }
 
-func storagePoolEventDeregister(connection virest.Connection, callbackId int) {
+func StoragePoolEventDeregister(connection virest.Connection, callbackId int) {
 	var (
 		virestError virest.Error
 		isError     bool
