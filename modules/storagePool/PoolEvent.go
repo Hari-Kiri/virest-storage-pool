@@ -30,26 +30,6 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 		isError                                       bool
 	)
 
-	eventRunDefaultImpl := true
-	go func() {
-		for eventRunDefaultImpl {
-			errorEventRunDefaultImpl := libvirt.EventRunDefaultImpl()
-			if errorEventRunDefaultImpl != nil {
-				virestError.Error = libvirt.Error{
-					Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
-					Domain:  libvirt.FROM_EVENT,
-					Message: fmt.Sprintf("failed start EventRunDefaultImpl(): %s", errorEventRunDefaultImpl),
-					Level:   libvirt.ERR_ERROR,
-				}
-				isError = true
-				break
-			}
-		}
-	}()
-	if isError {
-		return virestError, isError
-	}
-
 	if types < 0 {
 		virestError.Error = libvirt.Error{
 			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
@@ -92,7 +72,6 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 		) {
 			PoolEventProbingResult.EventLifecycle = *event
 			StoragePoolEventDeregister(connection, callbackId)
-			eventRunDefaultImpl = false
 		})
 
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
@@ -105,7 +84,6 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 		) {
 			PoolEventProbingResult.EventRefresh = 1
 			StoragePoolEventDeregister(connection, callbackId)
-			eventRunDefaultImpl = false
 		})
 
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
