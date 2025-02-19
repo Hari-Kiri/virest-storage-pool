@@ -22,4 +22,7 @@ type Event struct {
 
 	// Refresh event default is 0, when occur it will change to 1.
 	EventRefresh int `json:"eventRefresh"`
+
+	Timestamp     int64
+	TimestampNano int64
 }

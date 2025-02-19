@@ -2,6 +2,7 @@ package storagePool
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolEvent"
@@ -80,6 +81,8 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (poolE
 		})
 		defer StoragePoolEventDeregister(connection, callbackId)
 
+		result.Timestamp = time.Now().Unix()
+		result.TimestampNano = time.Now().UnixNano()
 		result.EventLifecycle = <-storagePoolEventLifecycleCallbackResult
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
@@ -95,6 +98,8 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (poolE
 		})
 		defer StoragePoolEventDeregister(connection, callbackId)
 
+		result.Timestamp = time.Now().Unix()
+		result.TimestampNano = time.Now().UnixNano()
 		result.EventRefresh = <-storagePoolEventGenericCallbackResult
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
