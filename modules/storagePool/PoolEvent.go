@@ -9,26 +9,34 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Get the probing result. Run  PoolEvent() before,  to init event probe, or  it will always
-// return invalid event.
-var PoolEventProbingResult poolEvent.Event
-
-// Init pool event probe and get the result using 'PoolEventProbingResult' variable. Probing
-// will be  done until selected storage  pool events type  occur. Please registering default
-// event  implementation  using  'libvirt.EventRegisterDefaultImpl()' in main package before
-// initiate pool event probe using this function.
+// Init pool event probe and wait for result. Probing will be done until selected storage
+// pool events type occur. Please registering default event implementation using
+//
+//	libvirt.EventRegisterDefaultImpl()
+//
+// then run iteration of the event loop using
+//
+//	libvirt.EventRunDefaultImpl()
+//
+// inside goroutine in main package before initiate pool event probe using this function.
 //
 // types:
 //   - 0 = lifecycle
 //   - 1 = refresh
-func PoolEvent(connection virest.Connection, poolUuid string, types uint) (virest.Error, bool) {
+func PoolEvent(connection virest.Connection, poolUuid string, types uint) (poolEvent.Event, virest.Error, bool) {
 	var (
+		result                                        poolEvent.Event
 		storagePoolObject                             *libvirt.StoragePool
 		callbackId                                    int
 		errorGetStoragePoolObject, errorGetCallbackId error
 		virestError                                   virest.Error
 		isError                                       bool
 	)
+
+	result.EventRefresh = 0
+	result.EventLifecycle = libvirt.StoragePoolEventLifecycle{
+		Event: 6,
+	}
 
 	if types < 0 {
 		virestError.Error = libvirt.Error{
@@ -38,8 +46,9 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 			Level:   libvirt.ERR_ERROR,
 		}
 		isError = true
-		return virestError, isError
+		return result, virestError, isError
 	}
+
 	if types > 1 {
 		virestError.Error = libvirt.Error{
 			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
@@ -48,49 +57,49 @@ func PoolEvent(connection virest.Connection, poolUuid string, types uint) (vires
 			Level:   libvirt.ERR_ERROR,
 		}
 		isError = true
-		return virestError, isError
+		return result, virestError, isError
 	}
 
 	storagePoolObject, errorGetStoragePoolObject = connection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)
-		return virestError, isError
+		return result, virestError, isError
 	}
 	defer storagePoolObject.Free()
 
-	PoolEventProbingResult.EventRefresh = 0
-	PoolEventProbingResult.EventLifecycle = libvirt.StoragePoolEventLifecycle{
-		Event: 6,
-	}
-
 	if types == 0 {
+		var storagePoolEventLifecycleCallbackResult = make(chan libvirt.StoragePoolEventLifecycle)
+
 		callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
 			c *libvirt.Connect,
 			n *libvirt.StoragePool,
 			event *libvirt.StoragePoolEventLifecycle,
 		) {
-			PoolEventProbingResult.EventLifecycle = *event
-			StoragePoolEventDeregister(connection, callbackId)
+			storagePoolEventLifecycleCallbackResult <- *event
 		})
+		defer StoragePoolEventDeregister(connection, callbackId)
 
+		result.EventLifecycle = <-storagePoolEventLifecycleCallbackResult
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
-		return virestError, isError
 	}
+
 	if types == 1 {
+		var storagePoolEventGenericCallbackResult = make(chan int)
+
 		callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
 			c *libvirt.Connect,
 			n *libvirt.StoragePool,
 		) {
-			PoolEventProbingResult.EventRefresh = 1
-			StoragePoolEventDeregister(connection, callbackId)
+			storagePoolEventGenericCallbackResult <- 1
 		})
+		defer StoragePoolEventDeregister(connection, callbackId)
 
+		result.EventRefresh = <-storagePoolEventGenericCallbackResult
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
-		return virestError, isError
 	}
 
-	return virestError, isError
+	return result, virestError, isError
 }
 
 func StoragePoolEventDeregister(connection virest.Connection, callbackId int) {

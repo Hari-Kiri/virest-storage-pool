@@ -13,7 +13,6 @@ import (
 
 func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 	var (
-		result          poolEvent.Event
 		requestBodyData poolEvent.Request
 		httpBody        poolEvent.Response
 	)
@@ -52,7 +51,7 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := storagePool.PoolEvent(
+	result, errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := storagePool.PoolEvent(
 		connection,
 		requestBodyData.Uuid,
 		types,
@@ -67,17 +66,6 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 			errorGetStoragePoolEvent.Message,
 		)
 		return
-	}
-
-	for {
-		if storagePool.PoolEventProbingResult.EventRefresh > 0 {
-			result.EventRefresh = storagePool.PoolEventProbingResult.EventRefresh
-			break
-		}
-		if storagePool.PoolEventProbingResult.EventLifecycle.Event < 6 {
-			result.EventLifecycle = storagePool.PoolEventProbingResult.EventLifecycle
-			break
-		}
 	}
 
 	httpBody.Response = true
