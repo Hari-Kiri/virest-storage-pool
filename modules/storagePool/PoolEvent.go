@@ -11,19 +11,28 @@ import (
 )
 
 // Init pool event probe and wait for result. Probing will be done until selected storage
-// pool events type occur. Please registering default event implementation using
+// pool events type occur. Please registering default event implementation in main package.
 //
-//	libvirt.EventRegisterDefaultImpl()
+//	errorEventRegisterDefaultImpl := libvirt.EventRegisterDefaultImpl()
+//	if errorEventRegisterDefaultImpl != nil {
+//		temboLog.FatalLogging("failed registers a default event implementation based on the poll() system call:", errorEventRegisterDefaultImpl)
+//	}
 //
-// then run iteration of the event loop using
+// then run iteration of the event loop inside goroutine in main package before initiate pool
+// event probe using this function.
 //
-//	libvirt.EventRunDefaultImpl()
-//
-// inside goroutine in main package before initiate pool event probe using this function.
+//	go func() {
+//		for {
+//			errorEventRunDefaultImpl := libvirt.EventRunDefaultImpl()
+//			if errorEventRunDefaultImpl != nil {
+//				temboLog.FatalLogging("failed starting run one iteration of the event loop:", errorEventRunDefaultImpl)
+//			}
+//		}
+//	}()
 //
 // types:
-//   - 0 = lifecycle
-//   - 1 = refresh
+//   - 0 = storage pool event lifecycle
+//   - 1 = storage pool event refresh
 func PoolEvent(connection virest.Connection, poolUuid string, types uint) (poolEvent.Event, virest.Error, bool) {
 	var (
 		result                                        poolEvent.Event
