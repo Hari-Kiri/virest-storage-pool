@@ -3,6 +3,7 @@ package storagePool
 import (
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/modules/storagePool"
@@ -51,10 +52,18 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	timeout, errorParseTimeoutToInt := strconv.Atoi(requestBodyData.Timeout)
+	if errorParseTimeoutToInt != nil {
+		timeout = -1
+	}
+
 	result, errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := storagePool.PoolEvent(
 		connection,
 		requestBodyData.Uuid,
+		responseWriter,
+		request,
 		types,
+		int(timeout),
 	)
 	if isErrorGetStoragePoolEvent {
 		httpBody.Response = false
