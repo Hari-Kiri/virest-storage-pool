@@ -63,7 +63,7 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		responseWriter,
 		request,
 		types,
-		int(timeout),
+		timeout,
 	)
 	if isErrorGetStoragePoolEvent {
 		httpBody.Response = false
