@@ -57,13 +57,15 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		timeout = -1
 	}
 
+	if timeout > -1 {
+		storagePool.PoolEventTimeout(connection, requestBodyData.Uuid, responseWriter, request, types, timeout)
+		return
+	}
+
 	result, errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := storagePool.PoolEvent(
 		connection,
 		requestBodyData.Uuid,
-		responseWriter,
-		request,
 		types,
-		timeout,
 	)
 	if isErrorGetStoragePoolEvent {
 		httpBody.Response = false
