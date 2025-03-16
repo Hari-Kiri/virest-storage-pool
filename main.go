@@ -37,6 +37,16 @@ func main() {
 		temboLog.FatalLogging("failed registers a default event implementation based on the poll() system call:", errorEventRegisterDefaultImpl)
 	}
 	temboLog.InfoLogging("registering a default event implementation based on the poll() system call, success!")
+	temboLog.InfoLogging("starting run iteration of the event loop...")
+	go func() {
+		for {
+			errorEventRunDefaultImpl := libvirt.EventRunDefaultImpl()
+			if errorEventRunDefaultImpl != nil {
+				temboLog.FatalLogging("failed starting run one iteration of the event loop:", errorEventRunDefaultImpl)
+			}
+		}
+	}()
+	temboLog.InfoLogging("starting run iteration of the event loop, success!")
 
 	// Make handler
 	goalMakeHandler.HandleRequest(storagePool.Authenticate, "/storage-pool/authenticate")
