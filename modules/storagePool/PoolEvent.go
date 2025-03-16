@@ -225,8 +225,8 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 				writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
 			}
 		})
+		errorLog("failed to probing pool event:", errorGetCallbackId)
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 1 && timeout == 0 {
@@ -251,8 +251,8 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 				writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
 			}
 		})
+		errorLog("failed to probing pool event:", errorGetCallbackId)
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 0 && timeout >= 1 {
@@ -322,10 +322,6 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 
 		storagePoolEventDeregister(connection, <-usedCallbackId)
 		errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
-	}
-
-	if isError {
-		temboLog.ErrorLogging("failed probing pool event:", virestError.Message)
 	}
 }
 
