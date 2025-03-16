@@ -226,7 +226,7 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 			}
 		})
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error) // error not handled
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 1 && timeout == 0 {
@@ -252,7 +252,7 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 			}
 		})
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error) // error not handled
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 0 && timeout >= 1 {
@@ -290,7 +290,7 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 			}
 		})
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error) // error not handled
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 1 && timeout >= 1 {
@@ -332,7 +332,7 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 			}
 		})
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error) // error not handled
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if isError {
