@@ -225,8 +225,8 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 				writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
 			}
 		})
+		errorLog("failed to probing pool event:", errorGetCallbackId)
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 1 && timeout == 0 {
@@ -251,8 +251,8 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 				writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
 			}
 		})
+		errorLog("failed to probing pool event:", errorGetCallbackId)
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 0 && timeout >= 1 {
@@ -264,19 +264,14 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 
 		writeEventStreamLifecycle(httpResponseWriter, &result, virestError, nil)
 
-		var (
-			addTimeout      int
-			errorAddTimeout error
-		)
-		addTimeout, errorAddTimeout = libvirt.EventAddTimeout(timeout*1000, func(timer int) {
-			storagePoolEventDeregister(connection, callbackId)
+		usedCallbackId := make(chan int)
+		addTimeout, errorAddTimeout := libvirt.EventAddTimeout(timeout*1000, func(timer int) {
+			usedCallbackId <- callbackId
 			writeEventStreamEnd(httpResponseWriter)
-			errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
 		})
 		errorLog("failed to add event timeout", errorAddTimeout)
 
 		httpConnection := httpRequest.Context()
-		usedCallbackId := make(chan int)
 		callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
 			c *libvirt.Connect,
 			n *libvirt.StoragePool,
@@ -289,8 +284,10 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 				writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
 			}
 		})
+		errorLog("failed to probing pool event:", errorGetCallbackId)
+
 		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
+		errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
 	}
 
 	if types == 1 && timeout >= 1 {
@@ -300,26 +297,16 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 		httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 		httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-		writeEventStreamRefresh(
-			httpResponseWriter,
-			&result,
-			virestError,
-			0,
-		)
+		writeEventStreamRefresh(httpResponseWriter, &result, virestError, 0)
 
-		var (
-			addTimeout      int
-			errorAddTimeout error
-		)
-		addTimeout, errorAddTimeout = libvirt.EventAddTimeout(timeout*1000, func(timer int) {
-			storagePoolEventDeregister(connection, callbackId)
+		usedCallbackId := make(chan int)
+		addTimeout, errorAddTimeout := libvirt.EventAddTimeout(timeout*1000, func(timer int) {
+			usedCallbackId <- callbackId
 			writeEventStreamEnd(httpResponseWriter)
-			errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
 		})
 		errorLog("failed to add event timeout", errorAddTimeout)
 
 		httpConnection := httpRequest.Context()
-		usedCallbackId := make(chan int)
 		callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
 			c *libvirt.Connect,
 			n *libvirt.StoragePool,
@@ -331,12 +318,10 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 				writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
 			}
 		})
-		storagePoolEventDeregister(connection, <-usedCallbackId)
-		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
-	}
+		errorLog("failed to probing pool event:", errorGetCallbackId)
 
-	if isError {
-		temboLog.ErrorLogging("failed probing pool event:", virestError.Message)
+		storagePoolEventDeregister(connection, <-usedCallbackId)
+		errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
 	}
 }
 
