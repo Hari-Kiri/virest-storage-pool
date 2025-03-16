@@ -13,7 +13,7 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Init pool event probe and wait for result. Probing will be done until selected storage
+// Init pool event probe and wait for result. This method will blocking until the probing task is completed. Probing will be done until selected storage
 // pool events type occur. Please registering default event implementation in main package.
 //
 //	errorEventRegisterDefaultImpl := libvirt.EventRegisterDefaultImpl()
@@ -36,13 +36,7 @@ import (
 // types:
 //   - 0 = storage pool event lifecycle
 //   - 1 = storage pool event refresh
-//
-// timeout:
-//   - -1 = wait until selected storage pool events type occur
-//   - 0 = loop until timeout or interrupt, rather than one-shot
-//   - more than 0 = timeout seconds
-func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter http.ResponseWriter, httpRequest *http.Request,
-	types uint, timeout int) (poolEvent.Event, virest.Error, bool) {
+func PoolEvent(connection virest.Connection, poolUuid string, types uint) (poolEvent.Event, virest.Error, bool) {
 	var (
 		result                                        poolEvent.Event
 		storagePoolObject                             *libvirt.StoragePool
@@ -87,7 +81,7 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 	}
 	defer storagePoolObject.Free()
 
-	if types == 0 && timeout == -1 {
+	if types == 0 {
 		var storagePoolEventLifecycleCallbackResult = make(chan libvirt.StoragePoolEventLifecycle)
 
 		callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
@@ -97,7 +91,7 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 		) {
 			storagePoolEventLifecycleCallbackResult <- *event
 		})
-		defer StoragePoolEventDeregister(connection, callbackId)
+		defer storagePoolEventDeregister(connection, callbackId)
 
 		result.Timestamp = time.Now().Unix()
 		result.TimestampNano = time.Now().UnixNano()
@@ -105,7 +99,7 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
-	if types == 1 && timeout == -1 {
+	if types == 1 {
 		var storagePoolEventGenericCallbackResult = make(chan int)
 
 		callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
@@ -114,11 +108,150 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 		) {
 			storagePoolEventGenericCallbackResult <- 1
 		})
-		defer StoragePoolEventDeregister(connection, callbackId)
+		defer storagePoolEventDeregister(connection, callbackId)
 
 		result.Timestamp = time.Now().Unix()
 		result.TimestampNano = time.Now().UnixNano()
 		result.EventRefresh = <-storagePoolEventGenericCallbackResult
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
+	}
+
+	return result, virestError, isError
+}
+
+// Init pool event probe with timeout or loop until interupt. This method will blocking and create server sent event protocol
+// until the probing task is completed. Unlike PoolEvent(), probing task will be completed when it has timeout or interupt.
+// Please registering default event implementation in main package.
+//
+//	errorEventRegisterDefaultImpl := libvirt.EventRegisterDefaultImpl()
+//	if errorEventRegisterDefaultImpl != nil {
+//		temboLog.FatalLogging("failed registers a default event implementation based on the poll() system call:", errorEventRegisterDefaultImpl)
+//	}
+//
+// then run iteration of the event loop inside goroutine in main package before initiate pool
+// event probe using this function.
+//
+//	go func() {
+//		for {
+//			errorEventRunDefaultImpl := libvirt.EventRunDefaultImpl()
+//			if errorEventRunDefaultImpl != nil {
+//				temboLog.FatalLogging("failed starting run one iteration of the event loop:", errorEventRunDefaultImpl)
+//			}
+//		}
+//	}()
+//
+// types:
+//   - 0 = storage pool event lifecycle
+//   - 1 = storage pool event refresh
+//
+// timeout:
+//   - 0 = loop until interrupt
+//   - more than 0 = timeout seconds
+func PoolEventTimeout(connection virest.Connection, poolUuid string, httpResponseWriter http.ResponseWriter, httpRequest *http.Request, types uint, timeout int) {
+	var (
+		result                                        poolEvent.Event
+		storagePoolObject                             *libvirt.StoragePool
+		callbackId                                    int
+		errorGetStoragePoolObject, errorGetCallbackId error
+		virestError                                   virest.Error
+		isError                                       bool
+	)
+
+	result.EventRefresh = 0
+	result.EventLifecycle = libvirt.StoragePoolEventLifecycle{
+		Event: 6,
+	}
+
+	if types < 0 {
+		virestError.Error = libvirt.Error{
+			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
+			Domain:  libvirt.FROM_EVENT,
+			Message: fmt.Sprintf("no event type: %d", types),
+			Level:   libvirt.ERR_ERROR,
+		}
+		isError = true
+	}
+	if types > 1 {
+		virestError.Error = libvirt.Error{
+			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
+			Domain:  libvirt.FROM_EVENT,
+			Message: fmt.Sprintf("no event type: %d", types),
+			Level:   libvirt.ERR_ERROR,
+		}
+		isError = true
+	}
+	if timeout < 0 {
+		virestError.Error = libvirt.Error{
+			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
+			Domain:  libvirt.FROM_EVENT,
+			Message: fmt.Sprintf("timeout must be positive integer: %d", timeout),
+			Level:   libvirt.ERR_ERROR,
+		}
+		isError = true
+	}
+	if isError {
+		temboLog.ErrorLogging("failed probing event:", virestError.Message)
+		return
+	}
+
+	storagePoolObject, errorGetStoragePoolObject = connection.LookupStoragePoolByUUIDString(poolUuid)
+	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
+	if isError {
+		temboLog.ErrorLogging("failed get storage pool object:", virestError.Message)
+		return
+	}
+	defer storagePoolObject.Free()
+
+	if types == 0 && timeout == 0 {
+		httpResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+		httpResponseWriter.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+		httpResponseWriter.Header().Set("Content-Type", "text/event-stream")
+		httpResponseWriter.Header().Set("Cache-Control", "no-cache")
+		httpResponseWriter.Header().Set("Connection", "keep-alive")
+
+		writeEventStreamLifecycle(httpResponseWriter, &result, virestError, nil)
+
+		httpConnection := httpRequest.Context()
+		usedCallbackId := make(chan int)
+		callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
+			c *libvirt.Connect,
+			n *libvirt.StoragePool,
+			event *libvirt.StoragePoolEventLifecycle,
+		) {
+			select {
+			case <-httpConnection.Done():
+				usedCallbackId <- callbackId
+			default:
+				writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
+			}
+		})
+		storagePoolEventDeregister(connection, <-usedCallbackId)
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
+	}
+
+	if types == 1 && timeout == 0 {
+		httpResponseWriter.Header().Set("Access-Control-Allow-Origin", "*")
+		httpResponseWriter.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+		httpResponseWriter.Header().Set("Content-Type", "text/event-stream")
+		httpResponseWriter.Header().Set("Cache-Control", "no-cache")
+		httpResponseWriter.Header().Set("Connection", "keep-alive")
+
+		writeEventStreamRefresh(httpResponseWriter, &result, virestError, 0)
+
+		httpConnection := httpRequest.Context()
+		usedCallbackId := make(chan int)
+		callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
+			c *libvirt.Connect,
+			n *libvirt.StoragePool,
+		) {
+			select {
+			case <-httpConnection.Done():
+				usedCallbackId <- callbackId
+			default:
+				writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
+			}
+		})
+		storagePoolEventDeregister(connection, <-usedCallbackId)
 		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
@@ -129,48 +262,35 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 		httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 		httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-		createEventStreamLifecycle(
-			httpResponseWriter,
-			&result,
-			virestError,
-			nil,
-		)
+		writeEventStreamLifecycle(httpResponseWriter, &result, virestError, nil)
 
 		var (
 			addTimeout      int
 			errorAddTimeout error
 		)
 		addTimeout, errorAddTimeout = libvirt.EventAddTimeout(timeout*1000, func(timer int) {
-			StoragePoolEventDeregister(connection, callbackId)
-			createEventStreamEnd(httpResponseWriter)
+			storagePoolEventDeregister(connection, callbackId)
+			writeEventStreamEnd(httpResponseWriter)
 			errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
 		})
 		errorLog("failed to add event timeout", errorAddTimeout)
 
 		httpConnection := httpRequest.Context()
-		for {
+		usedCallbackId := make(chan int)
+		callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
+			c *libvirt.Connect,
+			n *libvirt.StoragePool,
+			event *libvirt.StoragePoolEventLifecycle,
+		) {
 			select {
 			case <-httpConnection.Done():
-				break
+				usedCallbackId <- callbackId
 			default:
-				var storagePoolEventLifecycleCallbackResult = make(chan libvirt.StoragePoolEventLifecycle)
-				callbackId, errorGetCallbackId = connection.StoragePoolEventLifecycleRegister(storagePoolObject, func(
-					c *libvirt.Connect,
-					n *libvirt.StoragePool,
-					event *libvirt.StoragePoolEventLifecycle,
-				) {
-					defer StoragePoolEventDeregister(connection, callbackId)
-					storagePoolEventLifecycleCallbackResult <- *event
-				})
-				virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
-				createEventStreamLifecycle(
-					httpResponseWriter,
-					&result,
-					virestError,
-					storagePoolEventLifecycleCallbackResult,
-				)
+				writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
 			}
-		}
+		})
+		storagePoolEventDeregister(connection, <-usedCallbackId)
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
 	if types == 1 && timeout >= 1 {
@@ -180,11 +300,11 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 		httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 		httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-		createEventStreamRefresh(
+		writeEventStreamRefresh(
 			httpResponseWriter,
 			&result,
 			virestError,
-			nil,
+			0,
 		)
 
 		var (
@@ -192,41 +312,35 @@ func PoolEvent(connection virest.Connection, poolUuid string, httpResponseWriter
 			errorAddTimeout error
 		)
 		addTimeout, errorAddTimeout = libvirt.EventAddTimeout(timeout*1000, func(timer int) {
-			StoragePoolEventDeregister(connection, callbackId)
-			createEventStreamEnd(httpResponseWriter)
+			storagePoolEventDeregister(connection, callbackId)
+			writeEventStreamEnd(httpResponseWriter)
 			errorLog("failed to remove event timeout callback", libvirt.EventRemoveTimeout(addTimeout))
 		})
 		errorLog("failed to add event timeout", errorAddTimeout)
 
 		httpConnection := httpRequest.Context()
-		for {
+		usedCallbackId := make(chan int)
+		callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
+			c *libvirt.Connect,
+			n *libvirt.StoragePool,
+		) {
 			select {
 			case <-httpConnection.Done():
-				break
+				usedCallbackId <- callbackId
 			default:
-				var storagePoolEventGenericCallbackResult = make(chan int)
-				callbackId, errorGetCallbackId = connection.StoragePoolEventRefreshRegister(storagePoolObject, func(
-					c *libvirt.Connect,
-					n *libvirt.StoragePool,
-				) {
-					defer StoragePoolEventDeregister(connection, callbackId)
-					storagePoolEventGenericCallbackResult <- 1
-				})
-				virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
-				createEventStreamRefresh(
-					httpResponseWriter,
-					&result,
-					virestError,
-					storagePoolEventGenericCallbackResult,
-				)
+				writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
 			}
-		}
+		})
+		storagePoolEventDeregister(connection, <-usedCallbackId)
+		virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
 	}
 
-	return result, virestError, isError
+	if isError {
+		temboLog.ErrorLogging("failed probing pool event:", virestError.Message)
+	}
 }
 
-func StoragePoolEventDeregister(connection virest.Connection, callbackId int) {
+func storagePoolEventDeregister(connection virest.Connection, callbackId int) {
 	var (
 		virestError virest.Error
 		isError     bool
@@ -241,13 +355,12 @@ func StoragePoolEventDeregister(connection virest.Connection, callbackId int) {
 	temboLog.InfoLogging("deregister storage pool event callback with id:", callbackId)
 }
 
-func createEventStreamLifecycle(httpResponseWriter http.ResponseWriter, result *poolEvent.Event, virestError virest.Error,
-	storagePoolEventLifecycleCallbackResult chan libvirt.StoragePoolEventLifecycle) {
+func writeEventStreamLifecycle(httpResponseWriter http.ResponseWriter, result *poolEvent.Event, virestError virest.Error, event *libvirt.StoragePoolEventLifecycle) {
 	result.Timestamp = time.Now().Unix()
 	result.TimestampNano = time.Now().UnixNano()
 
-	if storagePoolEventLifecycleCallbackResult != nil {
-		result.EventLifecycle = <-storagePoolEventLifecycleCallbackResult
+	if event != nil {
+		result.EventLifecycle = *event
 	}
 
 	var httpBody poolEvent.Response
@@ -266,13 +379,12 @@ func createEventStreamLifecycle(httpResponseWriter http.ResponseWriter, result *
 	httpResponseWriter.(http.Flusher).Flush()
 }
 
-func createEventStreamRefresh(httpResponseWriter http.ResponseWriter, result *poolEvent.Event, virestError virest.Error,
-	storagePoolEventGenericCallbackResult chan int) {
+func writeEventStreamRefresh(httpResponseWriter http.ResponseWriter, result *poolEvent.Event, virestError virest.Error, flag int) {
 	result.Timestamp = time.Now().Unix()
 	result.TimestampNano = time.Now().UnixNano()
 
-	if storagePoolEventGenericCallbackResult != nil {
-		result.EventRefresh = <-storagePoolEventGenericCallbackResult
+	if flag != 0 {
+		result.EventRefresh = flag
 	}
 
 	var httpBody poolEvent.Response
@@ -291,7 +403,7 @@ func createEventStreamRefresh(httpResponseWriter http.ResponseWriter, result *po
 	httpResponseWriter.(http.Flusher).Flush()
 }
 
-func createEventStreamEnd(httpResponseWriter http.ResponseWriter) {
+func writeEventStreamEnd(httpResponseWriter http.ResponseWriter) {
 	response := []byte("event: end\n")
 	response = append(response, []byte("data: null")...)
 	response = append(response, []byte("\n\n")...)
@@ -301,6 +413,6 @@ func createEventStreamEnd(httpResponseWriter http.ResponseWriter) {
 
 func errorLog(message string, error any) {
 	if error != nil {
-		temboLog.ErrorLogging(message, error.(libvirt.Error))
+		temboLog.ErrorLogging(message, error.(libvirt.Error).Message)
 	}
 }
