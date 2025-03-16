@@ -180,6 +180,15 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 		}
 		isError = true
 	}
+	if timeout < 0 {
+		virestError.Error = libvirt.Error{
+			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
+			Domain:  libvirt.FROM_EVENT,
+			Message: fmt.Sprintf("timeout must be positive integer: %d", timeout),
+			Level:   libvirt.ERR_ERROR,
+		}
+		isError = true
+	}
 	if isError {
 		temboLog.ErrorLogging("failed probing event:", virestError.Message)
 		return
