@@ -378,6 +378,7 @@ func poolEventRefreshTimeout(httpResponseWriter http.ResponseWriter, httpRequest
 	virestError.Error, isError = errorAddTimeout.(libvirt.Error)
 	if isError {
 		temboLog.ErrorLogging("failed to add event timeout", virestError.Message)
+		return
 	}
 
 	httpConnection := httpRequest.Context()
