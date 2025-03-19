@@ -202,29 +202,28 @@ func PoolEventTimeout(connection virest.Connection, poolUuid string, httpRespons
 	defer storagePoolObject.Free()
 
 	if types == 0 && timeout == 0 {
-		poolEventLifecycleLoop(httpResponseWriter, httpRequest, connection, storagePoolObject)
+		poolEventLifecycleLoop(httpResponseWriter, httpRequest, connection, storagePoolObject, &result)
 		return
 	}
 
 	if types == 1 && timeout == 0 {
-		poolEventRefreshLoop(httpResponseWriter, httpRequest, connection, storagePoolObject)
+		poolEventRefreshLoop(httpResponseWriter, httpRequest, connection, storagePoolObject, &result)
 		return
 	}
 
 	if types == 0 && timeout >= 1 {
-		poolEventLifecycleTimeout(httpResponseWriter, httpRequest, connection, storagePoolObject, timeout)
+		poolEventLifecycleTimeout(httpResponseWriter, httpRequest, connection, storagePoolObject, &result, timeout)
 		return
 	}
 
 	if types == 1 && timeout >= 1 {
-		poolEventRefreshTimeout(httpResponseWriter, httpRequest, connection, storagePoolObject, timeout)
+		poolEventRefreshTimeout(httpResponseWriter, httpRequest, connection, storagePoolObject, &result, timeout)
 		return
 	}
 }
 
-func poolEventLifecycleLoop(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool) {
+func poolEventLifecycleLoop(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool, eventStructure *poolEvent.Event) {
 	var (
-		result             poolEvent.Event
 		callbackId         int
 		errorGetCallbackId error
 		virestError        virest.Error
@@ -237,7 +236,7 @@ func poolEventLifecycleLoop(httpResponseWriter http.ResponseWriter, httpRequest 
 	httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 	httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-	writeEventStreamLifecycle(httpResponseWriter, &result, virestError, nil)
+	writeEventStreamLifecycle(httpResponseWriter, eventStructure, virestError, nil)
 
 	httpConnection := httpRequest.Context()
 	usedCallbackId := make(chan int)
@@ -250,7 +249,7 @@ func poolEventLifecycleLoop(httpResponseWriter http.ResponseWriter, httpRequest 
 		case <-httpConnection.Done():
 			usedCallbackId <- callbackId
 		default:
-			writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
+			writeEventStreamLifecycle(httpResponseWriter, eventStructure, virestError, event)
 		}
 	})
 	virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
@@ -262,9 +261,8 @@ func poolEventLifecycleLoop(httpResponseWriter http.ResponseWriter, httpRequest 
 	storagePoolEventDeregister(connection, <-usedCallbackId)
 }
 
-func poolEventRefreshLoop(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool) {
+func poolEventRefreshLoop(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool, eventStructure *poolEvent.Event) {
 	var (
-		result             poolEvent.Event
 		callbackId         int
 		errorGetCallbackId error
 		virestError        virest.Error
@@ -277,7 +275,7 @@ func poolEventRefreshLoop(httpResponseWriter http.ResponseWriter, httpRequest *h
 	httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 	httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-	writeEventStreamRefresh(httpResponseWriter, &result, virestError, 0)
+	writeEventStreamRefresh(httpResponseWriter, eventStructure, virestError, 0)
 
 	httpConnection := httpRequest.Context()
 	usedCallbackId := make(chan int)
@@ -289,7 +287,7 @@ func poolEventRefreshLoop(httpResponseWriter http.ResponseWriter, httpRequest *h
 		case <-httpConnection.Done():
 			usedCallbackId <- callbackId
 		default:
-			writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
+			writeEventStreamRefresh(httpResponseWriter, eventStructure, virestError, 1)
 		}
 	})
 	virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
@@ -301,9 +299,8 @@ func poolEventRefreshLoop(httpResponseWriter http.ResponseWriter, httpRequest *h
 	storagePoolEventDeregister(connection, <-usedCallbackId)
 }
 
-func poolEventLifecycleTimeout(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool, timeout int) {
+func poolEventLifecycleTimeout(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool, eventStructure *poolEvent.Event, timeout int) {
 	var (
-		result             poolEvent.Event
 		callbackId         int
 		errorGetCallbackId error
 		virestError        virest.Error
@@ -316,7 +313,7 @@ func poolEventLifecycleTimeout(httpResponseWriter http.ResponseWriter, httpReque
 	httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 	httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-	writeEventStreamLifecycle(httpResponseWriter, &result, virestError, nil)
+	writeEventStreamLifecycle(httpResponseWriter, eventStructure, virestError, nil)
 
 	usedCallbackId := make(chan int)
 	addTimeout, errorAddTimeout := libvirt.EventAddTimeout(timeout*1000, func(timer int) {
@@ -339,7 +336,7 @@ func poolEventLifecycleTimeout(httpResponseWriter http.ResponseWriter, httpReque
 		case <-httpConnection.Done():
 			usedCallbackId <- callbackId
 		default:
-			writeEventStreamLifecycle(httpResponseWriter, &result, virestError, event)
+			writeEventStreamLifecycle(httpResponseWriter, eventStructure, virestError, event)
 		}
 	})
 	virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
@@ -357,9 +354,8 @@ func poolEventLifecycleTimeout(httpResponseWriter http.ResponseWriter, httpReque
 	}
 }
 
-func poolEventRefreshTimeout(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool, timeout int) {
+func poolEventRefreshTimeout(httpResponseWriter http.ResponseWriter, httpRequest *http.Request, connection virest.Connection, storagePoolObject *libvirt.StoragePool, eventStructure *poolEvent.Event, timeout int) {
 	var (
-		result             poolEvent.Event
 		callbackId         int
 		errorGetCallbackId error
 		virestError        virest.Error
@@ -372,7 +368,7 @@ func poolEventRefreshTimeout(httpResponseWriter http.ResponseWriter, httpRequest
 	httpResponseWriter.Header().Set("Cache-Control", "no-cache")
 	httpResponseWriter.Header().Set("Connection", "keep-alive")
 
-	writeEventStreamRefresh(httpResponseWriter, &result, virestError, 0)
+	writeEventStreamRefresh(httpResponseWriter, eventStructure, virestError, 0)
 
 	usedCallbackId := make(chan int)
 	addTimeout, errorAddTimeout := libvirt.EventAddTimeout(timeout*1000, func(timer int) {
@@ -393,7 +389,7 @@ func poolEventRefreshTimeout(httpResponseWriter http.ResponseWriter, httpRequest
 		case <-httpConnection.Done():
 			usedCallbackId <- callbackId
 		default:
-			writeEventStreamRefresh(httpResponseWriter, &result, virestError, 1)
+			writeEventStreamRefresh(httpResponseWriter, eventStructure, virestError, 1)
 		}
 	})
 	virestError.Error, isError = errorGetCallbackId.(libvirt.Error)
