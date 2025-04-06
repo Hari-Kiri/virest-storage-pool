@@ -34,14 +34,14 @@ func getPoolDetail(libvirtStoragePoolObject libvirt.StoragePool, libvirtStorageX
 	return result, libvirtError, false
 }
 
-// Fetch an XML document describing all aspects of the storage pool.
-func PoolDetail(connection virest.Connection, poolUuid string, option uint) (poolDetail.Detail, virest.Error, bool) {
+// Fetch document describing all aspects of the storage pool.
+func (poolConnection *poolConnection) PoolDetail(poolUuid string, option uint) (poolDetail.Detail, virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
+	storagePoolObject, errorGetStoragePoolObject := poolConnection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)

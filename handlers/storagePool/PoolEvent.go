@@ -18,7 +18,7 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolEvent.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,
@@ -37,7 +37,7 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
 	types, errorParseTypesToUint, isErrorParseTypesToUint := utils.StringToUint(requestBodyData.Types)
 	if isErrorParseTypesToUint {
@@ -58,15 +58,11 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	if timeout > -1 {
-		storagePool.PoolEventTimeout(connection, requestBodyData.Uuid, responseWriter, request, types, timeout)
+		poolConnection.PoolEventTimeout(requestBodyData.Uuid, responseWriter, request, types, timeout)
 		return
 	}
 
-	result, errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := storagePool.PoolEvent(
-		connection,
-		requestBodyData.Uuid,
-		types,
-	)
+	result, errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := poolConnection.PoolEvent(requestBodyData.Uuid, types)
 	if isErrorGetStoragePoolEvent {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorGetStoragePoolEvent.Code)

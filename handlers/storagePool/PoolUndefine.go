@@ -17,7 +17,7 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolUndefine.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodDelete,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	errorPoolUndefine, isErrorPoolUndefine := storagePool.PoolUndefine(connection, requestBodyData.Uuid)
+	errorPoolUndefine, isErrorPoolUndefine := poolConnection.PoolUndefine(requestBodyData.Uuid)
 	if isErrorPoolUndefine {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolUndefine.Code)

@@ -17,7 +17,7 @@ func PoolDestroy(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolDestroy.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPatch,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolDestroy(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	errorPoolDestroy, isErrorPoolDestroy := storagePool.PoolDestroy(connection, requestBodyData.Uuid)
+	errorPoolDestroy, isErrorPoolDestroy := poolConnection.PoolDestroy(requestBodyData.Uuid)
 	if isErrorPoolDestroy {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolDestroy.Code)

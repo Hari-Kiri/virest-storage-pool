@@ -13,13 +13,13 @@ import (
 // Collect the list of storage pools, and allocate an array to store those objects.
 // Normally, all storage pools are returned; however, flags can be used to filter the results for a smaller list of targeted pools.
 // More about option UInteger [https://libvirt.org/html/libvirt-libvirt-storage.html#virConnectListAllStoragePoolsFlags].
-func PoolList(connection virest.Connection, option uint, storageXmlFlags uint) ([]poolList.Data, virest.Error, bool) {
+func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint) ([]poolList.Data, virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	storagePools, errorGetListOfStoragePool := connection.ListAllStoragePools(libvirt.ConnectListAllStoragePoolsFlags(option))
+	storagePools, errorGetListOfStoragePool := poolConnection.ListAllStoragePools(libvirt.ConnectListAllStoragePoolsFlags(option))
 	virestError.Error, isError = errorGetListOfStoragePool.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed list storage pool: %s", virestError.Message)

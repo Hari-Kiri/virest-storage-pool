@@ -17,7 +17,7 @@ func FindStoragePoolSource(responseWriter http.ResponseWriter, request *http.Req
 		httpBody        findStoragePoolSources.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPost,
 		&requestBodyData,
@@ -36,10 +36,9 @@ func FindStoragePoolSource(responseWriter http.ResponseWriter, request *http.Req
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	findStoragePoolSource, errorFindStoragePoolSource, isErrorFindStoragePoolSource := storagePool.FindStoragePoolSource(
-		connection,
+	findStoragePoolSource, errorFindStoragePoolSource, isErrorFindStoragePoolSource := poolConnection.FindStoragePoolSource(
 		requestBodyData.Type,
 		requestBodyData.SrcSpec.Source,
 	)

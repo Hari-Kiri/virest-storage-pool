@@ -17,7 +17,7 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolDefine.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPost,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolDefine(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	result, errorPoolDefine, isErrorPoolDefine := storagePool.PoolDefine(connection, requestBodyData.StoragePool, requestBodyData.Option)
+	result, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(requestBodyData.StoragePool, requestBodyData.Option)
 	if isErrorPoolDefine {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolDefine.Code)

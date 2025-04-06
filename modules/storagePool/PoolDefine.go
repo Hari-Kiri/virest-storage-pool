@@ -12,7 +12,7 @@ import (
 // Define new storage pool using json formatted data with option as define flags.
 // The option with UInteger 1 will validate the JSON document against libvirt schema, while the option with UInteger 0 does nothing.
 // Upon success, the UUID of the newly defined pool will be returned.
-func PoolDefine(connection virest.Connection, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (poolDefine.Uuid, virest.Error, bool) {
+func (poolConnection *poolConnection) PoolDefine(storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (poolDefine.Uuid, virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
@@ -25,7 +25,7 @@ func PoolDefine(connection virest.Connection, storagePool libvirtxml.StoragePool
 		return poolDefine.Uuid{}, virestError, isError
 	}
 
-	definePool, errorDefinePool := connection.StoragePoolDefineXML(libvirtXml, option)
+	definePool, errorDefinePool := poolConnection.StoragePoolDefineXML(libvirtXml, option)
 	virestError.Error, isError = errorDefinePool.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed to define new pool: %s", virestError.Message)

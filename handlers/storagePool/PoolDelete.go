@@ -17,7 +17,7 @@ func PoolDelete(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolDelete.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodDelete,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolDelete(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	errorPoolDelete, isErrorPoolDelete := storagePool.PoolDelete(connection, requestBodyData.Uuid, requestBodyData.Option)
+	errorPoolDelete, isErrorPoolDelete := poolConnection.PoolDelete(requestBodyData.Uuid, requestBodyData.Option)
 	if isErrorPoolDelete {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolDelete.Code)
