@@ -17,7 +17,7 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolBuild.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPatch,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolBuild(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	errorPoolBuild, isErrorPoolBuild := storagePool.PoolBuild(connection, requestBodyData.Uuid, requestBodyData.Option)
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(requestBodyData.Uuid, requestBodyData.Option)
 	if isErrorPoolBuild {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorPoolBuild.Code)

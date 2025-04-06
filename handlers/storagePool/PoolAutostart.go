@@ -17,7 +17,7 @@ func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolAutostart.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodPatch,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolAutostart(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	errorSetAutostart, isErrorSetAutostart := storagePool.PoolAutostart(connection, requestBodyData.Uuid, requestBodyData.Autostart)
+	errorSetAutostart, isErrorSetAutostart := poolConnection.PoolAutostart(requestBodyData.Uuid, requestBodyData.Autostart)
 	if isErrorSetAutostart {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorSetAutostart.Code)
