@@ -11,13 +11,13 @@ import (
 )
 
 // Get volatile information about the storage pool such as free space / usage summary
-func PoolInfo(connection virest.Connection, uuid string) (poolInfo.Info, virest.Error, bool) {
+func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	storagePool, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(uuid)
+	storagePoolObject, errorGetStoragePoolObject := poolConnection.LookupStoragePoolByUUIDString(uuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed list storage pool: %s", virestError.Message)
@@ -33,14 +33,14 @@ func PoolInfo(connection virest.Connection, uuid string) (poolInfo.Info, virest.
 	go func() {
 		defer waitGroup.Done()
 
-		errorGetStoragePoolRef := storagePool.Ref()
+		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 			return
 		}
-		defer storagePool.Free()
+		defer storagePoolObject.Free()
 
-		storagePoolName, errorGetStoragePoolName := storagePool.GetName()
+		storagePoolName, errorGetStoragePoolName := storagePoolObject.GetName()
 		if errorGetStoragePoolName != nil {
 			temboLog.ErrorLogging("failed get storage pool name", errorGetStoragePoolName)
 			return
@@ -51,14 +51,14 @@ func PoolInfo(connection virest.Connection, uuid string) (poolInfo.Info, virest.
 	go func() {
 		defer waitGroup.Done()
 
-		errorGetStoragePoolRef := storagePool.Ref()
+		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 			return
 		}
-		defer storagePool.Free()
+		defer storagePoolObject.Free()
 
-		storagePoolInfo, errorGetStoragePoolInfo := storagePool.GetInfo()
+		storagePoolInfo, errorGetStoragePoolInfo := storagePoolObject.GetInfo()
 		if errorGetStoragePoolInfo != nil {
 			temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolInfo)
 			return
@@ -72,14 +72,14 @@ func PoolInfo(connection virest.Connection, uuid string) (poolInfo.Info, virest.
 	go func() {
 		defer waitGroup.Done()
 
-		errorGetStoragePoolRef := storagePool.Ref()
+		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 			return
 		}
-		defer storagePool.Free()
+		defer storagePoolObject.Free()
 
-		storagePoolAutostart, errorGetStoragePoolAutostart := storagePool.GetAutostart()
+		storagePoolAutostart, errorGetStoragePoolAutostart := storagePoolObject.GetAutostart()
 		if errorGetStoragePoolAutostart != nil {
 			temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolAutostart)
 			return
@@ -90,14 +90,14 @@ func PoolInfo(connection virest.Connection, uuid string) (poolInfo.Info, virest.
 	go func() {
 		defer waitGroup.Done()
 
-		errorGetStoragePoolRef := storagePool.Ref()
+		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 			return
 		}
-		defer storagePool.Free()
+		defer storagePoolObject.Free()
 
-		storagePoolPersistent, errorGetStoragePoolPersistent := storagePool.IsPersistent()
+		storagePoolPersistent, errorGetStoragePoolPersistent := storagePoolObject.IsPersistent()
 		if errorGetStoragePoolPersistent != nil {
 			temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolPersistent)
 			return

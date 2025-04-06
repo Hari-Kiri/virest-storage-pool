@@ -9,13 +9,13 @@ import (
 
 // Destroy an active storage pool. This will deactivate the pool on the host, but keep any persistent config associated with it.
 // If it has a persistent config it can later be restarted with storagePool.PoolCreate().
-func PoolDestroy(connection virest.Connection, poolUuid string) (virest.Error, bool) {
+func (poolConnection *poolConnection) PoolDestroy(poolUuid string) (virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
+	storagePoolObject, errorGetStoragePoolObject := poolConnection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)
