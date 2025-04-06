@@ -13,24 +13,30 @@ import (
 	"libvirt.org/go/libvirt"
 )
 
-// Validate user request using given bearer token which is generated JWT by ViRest Utilities 'auth.BasicAuth()' module. Look up hypervisor
-// URI on 'Hypervisor-Uri' request header field. Connect to hypervisor via SSH tunnel and check the expected HTTP request method then convert
-// the JSON request body to structure if any. SSH tunnel work with Key-Based authentication. Please, create SSH Key on the host and copy it
-// on the remote libvirt-daemon host
+// Connection pointer to the targeted hypervisor for storage pool management purposes.
+type poolConnection virest.Connection
+
+// This function simplifies the preconditioning process after a request from a client occurs:
 //
-//	~/.ssh/authorized_keys
+//   - Validate user request using given bearer token which is generated JWT by ViRest Utilities 'auth.BasicAuth()' module.
+//
+//   - Look up hypervisor URI on 'Hypervisor-Uri' request header field.
+//
+//   - Connect to hypervisor via SSH tunnel and check the expected HTTP request method then convert the JSON request body to structure if any.
+//
+//   - SSH tunnel work with Key-Based authentication (Please, create SSH Key on the host and copy it on the remote libvirt-daemon host '~/.ssh/authorized_keys')
 //
 // Notes for HTTP GET method:
 //
-// - Query parameter and structure field will be compared in case sensitive.
+//   - Query parameter and structure field will be compared in case sensitive.
 //
-// - Every structure field data type must be string, so You must convert it to the right data type before You use it.
+//   - Every structure field data type must be string, so You must convert it to the right data type before You use it.
 //
-// - Untested for array query argument.
+//   - Untested for array query argument.
 //
 // Notes for HTTP POST, PUT, PATCH and DELETE method:
 //
-// - This function always looking for request body for data and parse them to 'structure' parameter.
+//   - This function always looking for request body for data and parse them to 'structure' parameter.
 func RequestPrecondition[RequestStructure utils.RequestStructure](
 	httpRequest *http.Request,
 	expectedRequestMethod string,
@@ -38,7 +44,7 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	applicationName string,
 	jwtSigningMethod *jwt.SigningMethodHMAC,
 	jwtSignatureKey []byte,
-) (virest.Connection, virest.Error, bool) {
+) (poolConnection, virest.Error, bool) {
 	libvirtErrorAuth, isErrorAuth := auth.BearerTokenAuth(
 		httpRequest,
 		applicationName,
@@ -46,7 +52,7 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 		jwtSignatureKey,
 	)
 	if isErrorAuth {
-		return virest.Connection{}, virest.Error{Error: libvirt.Error{
+		return poolConnection{}, virest.Error{Error: libvirt.Error{
 			Code:    libvirt.ERR_AUTH_FAILED,
 			Domain:  libvirt.FROM_NET,
 			Message: fmt.Sprintf("authentication failed: %s", libvirtErrorAuth.Message),
@@ -55,7 +61,7 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	}
 
 	var (
-		result                                virest.Connection
+		virestConnection                      virest.Connection
 		waitGroup                             sync.WaitGroup
 		errorConnect, errorPrepareRequest     virest.Error
 		isErrorConnect, isErrorPrepareRequest bool
@@ -77,7 +83,7 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 			return
 		}
 
-		result, errorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
+		virestConnection, errorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
 		if isErrorConnect {
 			temboLog.ErrorLogging(
 				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
@@ -99,12 +105,12 @@ func RequestPrecondition[RequestStructure utils.RequestStructure](
 	waitGroup.Wait()
 
 	if isErrorConnect {
-		return virest.Connection{}, errorConnect, isErrorConnect
+		return poolConnection{}, errorConnect, isErrorConnect
 	}
 	if isErrorPrepareRequest {
-		result.Close()
-		return virest.Connection{}, errorPrepareRequest, isErrorPrepareRequest
+		virestConnection.Close()
+		return poolConnection{}, errorPrepareRequest, isErrorPrepareRequest
 	}
 
-	return result, virest.Error{}, false
+	return poolConnection{virestConnection.Connect}, virest.Error{}, false
 }
