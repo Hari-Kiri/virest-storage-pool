@@ -15,7 +15,7 @@ import (
 // specifying where to look for the pools.
 //
 // srcSpec is not required for some types (e.g., those querying local storage resources only)
-func FindStoragePoolSource(connection virest.Connection, pooltype string, srcSpec libvirtxml.Source) (findStoragePoolSources.Sources, virest.Error, bool) {
+func (poolConnection *poolConnection) FindStoragePoolSource(pooltype string, srcSpec libvirtxml.Source) (findStoragePoolSources.Sources, virest.Error, bool) {
 	var (
 		srcSpecXml  string
 		virestError virest.Error
@@ -30,7 +30,7 @@ func FindStoragePoolSource(connection virest.Connection, pooltype string, srcSpe
 
 	// extra flags; not used yet, so callers should always pass 0
 	// https://libvirt.org/html/libvirt-libvirt-storage.html#virConnectFindStoragePoolSources
-	discoverStoragePoolSources, errorDiscoverStoragePoolSources := connection.FindStoragePoolSources(pooltype, srcSpecXml, 0)
+	discoverStoragePoolSources, errorDiscoverStoragePoolSources := poolConnection.FindStoragePoolSources(pooltype, srcSpecXml, 0)
 	virestError.Error, isError = errorDiscoverStoragePoolSources.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed to find potential storage pool sources: %s", virestError.Message)

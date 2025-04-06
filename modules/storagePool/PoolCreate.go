@@ -8,13 +8,13 @@ import (
 )
 
 // Starts an inactive storage pool.
-func PoolCreate(connection virest.Connection, poolUuid string, option libvirt.StoragePoolCreateFlags) (virest.Error, bool) {
+func (poolConnection *poolConnection) PoolCreate(poolUuid string, option libvirt.StoragePoolCreateFlags) (virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
+	storagePoolObject, errorGetStoragePoolObject := poolConnection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)

@@ -8,13 +8,13 @@ import (
 )
 
 // Delete the underlying pool resources. This is a non-recoverable operation.
-func PoolDelete(connection virest.Connection, poolUuid string, option libvirt.StoragePoolDeleteFlags) (virest.Error, bool) {
+func (poolConnection *poolConnection) PoolDelete(poolUuid string, option libvirt.StoragePoolDeleteFlags) (virest.Error, bool) {
 	var (
 		virestError virest.Error
 		isError     bool
 	)
 
-	storagePoolObject, errorGetStoragePoolObject := connection.LookupStoragePoolByUUIDString(poolUuid)
+	storagePoolObject, errorGetStoragePoolObject := poolConnection.LookupStoragePoolByUUIDString(poolUuid)
 	virestError.Error, isError = errorGetStoragePoolObject.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed get storage pool object: %s", virestError.Message)

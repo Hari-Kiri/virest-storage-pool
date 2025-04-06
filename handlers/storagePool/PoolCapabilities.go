@@ -17,7 +17,7 @@ func PoolCapabilities(responseWriter http.ResponseWriter, request *http.Request)
 		httpBody        poolCapabilities.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,
@@ -36,9 +36,9 @@ func PoolCapabilities(responseWriter http.ResponseWriter, request *http.Request)
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
-	poolCapabilities, errorGetPoolCapabilities, isErrorGetPoolCapabilities := storagePool.PoolCapabilities(connection)
+	poolCapabilities, errorGetPoolCapabilities, isErrorGetPoolCapabilities := poolConnection.PoolCapabilities()
 	if isErrorGetPoolCapabilities {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorGetPoolCapabilities.Code)

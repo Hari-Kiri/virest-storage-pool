@@ -17,7 +17,7 @@ func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolDetail.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,
@@ -36,7 +36,7 @@ func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 		)
 		return
 	}
-	defer connection.Close()
+	defer poolConnection.Close()
 
 	option, errorParseOptionToUint, isErrorParseOptionToUint := utils.StringToUint(requestBodyData.Option)
 	if isErrorParseOptionToUint {
@@ -51,7 +51,7 @@ func PoolDetail(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result, errorGetPoolDetail, isErrorGetPoolDetail := storagePool.PoolDetail(connection, requestBodyData.Uuid, option)
+	result, errorGetPoolDetail, isErrorGetPoolDetail := poolConnection.PoolDetail(requestBodyData.Uuid, option)
 	if isErrorGetPoolDetail {
 		httpBody.Response = false
 		httpBody.Code = utils.HttpErrorCode(errorGetPoolDetail.Code)
