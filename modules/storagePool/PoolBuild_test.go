@@ -12,7 +12,7 @@ var storagePoolDirectory = libvirtxml.StoragePool{
 	Type: "dir",
 	Name: "unit-test-pool-directory",
 	Target: &libvirtxml.StoragePoolTarget{
-		Path: "/home/dexip/unit-test",
+		Path: "/home/dexip/unit-test-pool-directory",
 		Permissions: &libvirtxml.StoragePoolTargetPermissions{
 			Mode:  "0755",
 			Owner: "1000",
