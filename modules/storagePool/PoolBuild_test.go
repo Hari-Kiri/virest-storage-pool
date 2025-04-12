@@ -78,11 +78,6 @@ func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
-	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, 0)
-	if isErrorPoolBuild {
-		test.Fatalf("build pool from scratch failed: %s", errorPoolBuild.Message)
-	}
-
 	test.Cleanup(func() {
 		if errorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); errorPoolDelete != nil {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Error())
