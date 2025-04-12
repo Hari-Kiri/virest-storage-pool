@@ -18,7 +18,7 @@ func TestPoolAutostartTrue(test *testing.T) {
 
 	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolAutostart(poolAutostartTestUuid, true)
 	if isErrorPoolAutostart {
-		test.Errorf("turn on pool autostart failed: %s", errorPoolAutostart.Message)
+		test.Errorf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
 	}
 }
 
@@ -36,6 +36,6 @@ func TestPoolAutostartFalse(test *testing.T) {
 
 	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolAutostart(poolAutostartTestUuid, false)
 	if isErrorPoolAutostart {
-		test.Errorf("turn off pool autostart failed: %s", errorPoolAutostart.Message)
+		test.Errorf("turn off pool autostart test failed: %s", errorPoolAutostart.Message)
 	}
 }
