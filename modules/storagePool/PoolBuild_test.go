@@ -21,6 +21,21 @@ var storagePoolDirectory = libvirtxml.StoragePool{
 	},
 }
 
+var storagePoolFilesystem = libvirtxml.StoragePool{
+	Type: "fs",
+	Name: "unit-test-pool-filesystem",
+	Source: &libvirtxml.StoragePoolSource{
+		Device: []libvirtxml.StoragePoolSourceDevice{
+			{
+				Path: "/dev/vdb",
+			},
+		},
+	},
+	Target: &libvirtxml.StoragePoolTarget{
+		Path: "/mnt/unit-test-pool-filesystem",
+	},
+}
+
 func TestPoolBuildFromScratch(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
