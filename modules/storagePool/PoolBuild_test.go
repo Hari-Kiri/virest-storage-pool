@@ -24,7 +24,7 @@ var storagePool = libvirtxml.StoragePool{
 func TestPoolBuildFromScratch(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
-		test.Fatalf("find storage pool source test failed: %s", errorGetPoolConnection.Message)
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
 	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePool, 1)
@@ -46,9 +46,9 @@ func TestPoolBuildFromScratch(test *testing.T) {
 		}
 	})
 
-	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolBuild(poolUuid, 0)
-	if isErrorPoolAutostart {
-		test.Errorf("find storage pool source test failed: %s", errorPoolAutostart.Message)
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, 0)
+	if isErrorPoolBuild {
+		test.Errorf("build pool from scratch test failed: %s", errorPoolBuild.Message)
 	}
 }
 
