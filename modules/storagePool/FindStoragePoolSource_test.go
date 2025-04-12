@@ -14,7 +14,7 @@ const (
 func TestFindStoragePoolSourceNetfs(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
-		test.Fatalf("find storage pool source test failed: %s", errorGetPoolConnection.Message)
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
 	test.Cleanup(func() {
@@ -31,14 +31,14 @@ func TestFindStoragePoolSourceNetfs(test *testing.T) {
 	}
 	_, errorFindStoragePoolSource, isErrorFindStoragePoolSource := poolConnection.FindStoragePoolSource("netfs", srcSpec)
 	if isErrorFindStoragePoolSource {
-		test.Errorf("find storage pool source test failed: %s", errorFindStoragePoolSource.Message)
+		test.Errorf("find storage pool netfs source test failed: %s", errorFindStoragePoolSource.Message)
 	}
 }
 
 func TestFindStoragePoolSourceIscsi(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
-		test.Fatalf("find storage pool source test failed: %s", errorGetPoolConnection.Message)
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
 	test.Cleanup(func() {
@@ -55,6 +55,6 @@ func TestFindStoragePoolSourceIscsi(test *testing.T) {
 	}
 	_, errorFindStoragePoolSource, isErrorFindStoragePoolSource := poolConnection.FindStoragePoolSource("iscsi", srcSpec)
 	if isErrorFindStoragePoolSource {
-		test.Errorf("find storage pool source test failed: %s", errorFindStoragePoolSource.Message)
+		test.Errorf("find storage pool iscsi source test failed: %s", errorFindStoragePoolSource.Message)
 	}
 }
