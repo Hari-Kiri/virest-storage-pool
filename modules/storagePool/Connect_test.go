@@ -13,14 +13,12 @@ const hypervisorUri = "qemu:///system"
 func TestConnection(test *testing.T) {
 	virestConnection, errorConnect, isErrorConnect := utils.NewConnectWithAuth(hypervisorUri, nil, 0)
 	if isErrorConnect {
-		test.Errorf("connection test failed: %s", errorConnect.Message)
-		return
+		test.Fatalf("connection test failed: %s", errorConnect.Message)
 	}
 
 	result, errorResult := virestConnection.Close()
 	if errorResult != nil {
 		test.Fatalf("close() error: %s", errorResult.Error())
-		return
 	}
 	if result != 0 {
 		test.Errorf("close() == %d, expected 0", result)
