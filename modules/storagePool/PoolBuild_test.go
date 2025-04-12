@@ -8,7 +8,7 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
-var storagePool = libvirtxml.StoragePool{
+var storagePoolDirectory = libvirtxml.StoragePool{
 	Type: "dir",
 	Name: "unit-test",
 	Target: &libvirtxml.StoragePoolTarget{
@@ -27,7 +27,7 @@ func TestPoolBuildFromScratch(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePool, 1)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
@@ -49,6 +49,42 @@ func TestPoolBuildFromScratch(test *testing.T) {
 	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, 0)
 	if isErrorPoolBuild {
 		test.Errorf("build pool from scratch test failed: %s", errorPoolBuild.Message)
+	}
+}
+
+func TestPoolBuildRepairOrReinitilize(test *testing.T) {
+	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
+	if isErrorGetPoolConnection {
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, 0)
+	if isErrorPoolBuild {
+		test.Fatalf("build pool from scratch failed: %s", errorPoolBuild.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); errorPoolDelete != nil {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Error())
+		}
+
+		if errorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); errorPoolUndefine != nil {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Error())
+		}
+
+		if errorCloseConnection := poolConnection.helperTestCloseConnection(test); errorCloseConnection != nil {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Error())
+		}
+	})
+
+	errorPoolBuildRepairOrReinitialize, isErrorPoolBuildRepairOrReinitialize := poolConnection.PoolBuild(poolUuid, 1)
+	if isErrorPoolBuildRepairOrReinitialize {
+		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuildRepairOrReinitialize.Message)
 	}
 }
 
