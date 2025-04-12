@@ -11,8 +11,8 @@ func TestPoolAutostartTrue(test *testing.T) {
 	}
 
 	test.Cleanup(func() {
-		if errorCloseConnection := poolConnection.helperTestCloseConnection(test); errorCloseConnection != nil {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Error())
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
 	})
 
@@ -29,8 +29,8 @@ func TestPoolAutostartFalse(test *testing.T) {
 	}
 
 	test.Cleanup(func() {
-		if errorCloseConnection := poolConnection.helperTestCloseConnection(test); errorCloseConnection != nil {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Error())
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
 	})
 

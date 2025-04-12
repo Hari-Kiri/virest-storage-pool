@@ -48,16 +48,16 @@ func TestPoolBuildFromScratch(test *testing.T) {
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); errorPoolDelete != nil {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Error())
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
-		if errorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); errorPoolUndefine != nil {
-			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Error())
+		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
 
-		if errorCloseConnection := poolConnection.helperTestCloseConnection(test); errorCloseConnection != nil {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Error())
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
 	})
 
@@ -79,16 +79,16 @@ func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); errorPoolDelete != nil {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Error())
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
-		if errorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); errorPoolUndefine != nil {
-			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Error())
+		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
 
-		if errorCloseConnection := poolConnection.helperTestCloseConnection(test); errorCloseConnection != nil {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Error())
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
 	})
 
@@ -110,26 +110,26 @@ func (poolConnection *poolConnection) helperTestPoolDefine(test *testing.T, stor
 	return result.Uuid, virest.Error{}, false
 }
 
-func (poolConnection *poolConnection) helperTestPoolDelete(test *testing.T, poolUuid string, option libvirt.StoragePoolDeleteFlags) error {
+func (poolConnection *poolConnection) helperTestPoolDelete(test *testing.T, poolUuid string, option libvirt.StoragePoolDeleteFlags) (virest.Error, bool) {
 	test.Helper()
 
 	errorPoolDelete, isErrorPoolDelete := poolConnection.PoolDelete(poolUuid, option)
 	if isErrorPoolDelete {
 		test.Fail()
-		return errorPoolDelete.Error
+		return errorPoolDelete, isErrorPoolDelete
 	}
 
-	return nil
+	return virest.Error{}, false
 }
 
-func (poolConnection *poolConnection) helperTestPoolUndefine(test *testing.T, poolUuid string) error {
+func (poolConnection *poolConnection) helperTestPoolUndefine(test *testing.T, poolUuid string) (virest.Error, bool) {
 	test.Helper()
 
 	errorPoolUndefine, isErrorPoolUndefine := poolConnection.PoolUndefine(poolUuid)
 	if isErrorPoolUndefine {
 		test.Fail()
-		return errorPoolUndefine.Error
+		return errorPoolUndefine, isErrorPoolUndefine
 	}
 
-	return nil
+	return virest.Error{}, false
 }
