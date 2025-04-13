@@ -129,6 +129,37 @@ func TestPoolBuildExtendExistingPool(test *testing.T) {
 	}
 }
 
+func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
+	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
+	if isErrorGetPoolConnection {
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, 1)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		}
+	})
+
+	errorPoolBuildFilesystemNotOverwriteExistingPool, isErrorPoolBuildFilesystemNotOverwriteExistingPool := poolConnection.PoolBuild(poolUuid, 4)
+	if isErrorPoolBuildFilesystemNotOverwriteExistingPool {
+		test.Errorf("overwrite existing filesystem pool test failed: %s", errorPoolBuildFilesystemNotOverwriteExistingPool.Message)
+	}
+}
+
 func (poolConnection *poolConnection) helperTestPoolDefine(test *testing.T, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (string, virest.Error, bool) {
 	test.Helper()
 
