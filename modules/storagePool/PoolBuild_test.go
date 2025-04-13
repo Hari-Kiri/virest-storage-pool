@@ -132,6 +132,7 @@ func TestPoolBuildExtendExistingPool(test *testing.T) {
 	}
 }
 
+// Currently only filesystem pool accepts flags VIR_STORAGE_POOL_BUILD_OVERWRITE (option 4).
 func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
@@ -163,6 +164,7 @@ func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
 	}
 }
 
+// Currently only filesystem pool accepts flags VIR_STORAGE_POOL_BUILD_NO_OVERWRITE (option 8).
 func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
