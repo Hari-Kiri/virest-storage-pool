@@ -27,7 +27,7 @@ var storagePoolFilesystem = libvirtxml.StoragePool{
 	Source: &libvirtxml.StoragePoolSource{
 		Device: []libvirtxml.StoragePoolSourceDevice{
 			{
-				Path: "/dev/vdb",
+				Path: "/dev/vdb1",
 			},
 		},
 	},
@@ -95,6 +95,37 @@ func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 	errorPoolBuildRepairOrReinitialize, isErrorPoolBuildRepairOrReinitialize := poolConnection.PoolBuild(poolUuid, 1)
 	if isErrorPoolBuildRepairOrReinitialize {
 		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuildRepairOrReinitialize.Message)
+	}
+}
+
+func TestPoolBuildExtendExistingPool(test *testing.T) {
+	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
+	if isErrorGetPoolConnection {
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		}
+	})
+
+	errorPoolBuildExtendExistingPool, isErrorPoolBuildExtendExistingPool := poolConnection.PoolBuild(poolUuid, 2)
+	if isErrorPoolBuildExtendExistingPool {
+		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuildExtendExistingPool.Message)
 	}
 }
 
