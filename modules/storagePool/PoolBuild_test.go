@@ -30,6 +30,9 @@ var storagePoolFilesystem = libvirtxml.StoragePool{
 				Path: "/dev/vdb1",
 			},
 		},
+		Format: &libvirtxml.StoragePoolSourceFormat{
+			Type: "xfs",
+		},
 	},
 	Target: &libvirtxml.StoragePoolTarget{
 		Path: "/mnt/unit-test-pool-filesystem",
