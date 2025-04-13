@@ -125,7 +125,7 @@ func TestPoolBuildExtendExistingPool(test *testing.T) {
 
 	errorPoolBuildExtendExistingPool, isErrorPoolBuildExtendExistingPool := poolConnection.PoolBuild(poolUuid, 2)
 	if isErrorPoolBuildExtendExistingPool {
-		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuildExtendExistingPool.Message)
+		test.Errorf("extend existing pool test failed: %s", errorPoolBuildExtendExistingPool.Message)
 	}
 }
 
