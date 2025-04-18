@@ -70,6 +70,7 @@ func TestPoolBuildFromScratch(test *testing.T) {
 	}
 }
 
+// Unsupported in libvirt version 10.0.0
 func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
@@ -101,6 +102,7 @@ func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 	}
 }
 
+// Unsupported in libvirt version 10.0.0
 func TestPoolBuildExtendExistingPool(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
