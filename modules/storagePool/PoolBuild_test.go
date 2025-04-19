@@ -178,18 +178,6 @@ func (poolConnection *poolConnection) helperTestPoolBuild(test *testing.T, poolU
 	return virest.Error{}, false
 }
 
-func (poolConnection *poolConnection) helperTestPoolDelete(test *testing.T, poolUuid string, option libvirt.StoragePoolDeleteFlags) (virest.Error, bool) {
-	test.Helper()
-
-	errorPoolDelete, isErrorPoolDelete := poolConnection.PoolDelete(poolUuid, option)
-	if isErrorPoolDelete {
-		test.Fail()
-		return errorPoolDelete, isErrorPoolDelete
-	}
-
-	return virest.Error{}, false
-}
-
 func (poolConnection *poolConnection) helperTestPoolUndefine(test *testing.T, poolUuid string) (virest.Error, bool) {
 	test.Helper()
 
