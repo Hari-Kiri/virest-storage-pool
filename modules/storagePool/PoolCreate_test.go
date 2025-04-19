@@ -4,8 +4,7 @@ import (
 	"testing"
 )
 
-// Test for start pool
-func TestPoolCreateStartPool(test *testing.T) {
+func TestPoolCreateActionStartingPool(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
