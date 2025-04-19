@@ -113,3 +113,38 @@ func TestPoolCreateActionBuildCreateAndStartingPoolOverwriteDataInDirectory(test
 		test.Errorf("starting pool test failed: %s", errorPoolCreate.Message)
 	}
 }
+
+func TestPoolCreateActionBuildCreateAndStartingPoolNoOverwriteDataInDirectory(test *testing.T) {
+	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
+	if isErrorGetPoolConnection {
+		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDestroy, isErrorPoolDestroy := poolConnection.helperTestPoolDestroy(test, poolUuid); isErrorPoolDestroy {
+			test.Errorf("pool destroy failed: %s", errorPoolDestroy.Message)
+		}
+
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
+			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		}
+	})
+
+	errorPoolCreate, isErrorPoolCreate := poolConnection.PoolCreate(poolUuid, 4)
+	if isErrorPoolCreate {
+		test.Errorf("build, create and starting pool then no overwriting data inside directory test failed: %s", errorPoolCreate.Message)
+	}
+}
