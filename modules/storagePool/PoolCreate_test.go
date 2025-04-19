@@ -75,7 +75,7 @@ func TestPoolCreateActionBuildCreateAndStartingPool(test *testing.T) {
 
 	errorPoolCreate, isErrorPoolCreate := poolConnection.PoolCreate(poolUuid, 1)
 	if isErrorPoolCreate {
-		test.Errorf("starting pool test failed: %s", errorPoolCreate.Message)
+		test.Errorf("build, create and starting pool test failed: %s", errorPoolCreate.Message)
 	}
 }
 
@@ -110,7 +110,7 @@ func TestPoolCreateActionBuildCreateAndStartingPoolOverwriteDataInDirectory(test
 
 	errorPoolCreate, isErrorPoolCreate := poolConnection.PoolCreate(poolUuid, 2)
 	if isErrorPoolCreate {
-		test.Errorf("starting pool test failed: %s", errorPoolCreate.Message)
+		test.Errorf("build, create and starting pool then overwriting data inside directory test failed: %s", errorPoolCreate.Message)
 	}
 }
 
