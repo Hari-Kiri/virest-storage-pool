@@ -177,15 +177,3 @@ func (poolConnection *poolConnection) helperTestPoolBuild(test *testing.T, poolU
 
 	return virest.Error{}, false
 }
-
-func (poolConnection *poolConnection) helperTestPoolUndefine(test *testing.T, poolUuid string) (virest.Error, bool) {
-	test.Helper()
-
-	errorPoolUndefine, isErrorPoolUndefine := poolConnection.PoolUndefine(poolUuid)
-	if isErrorPoolUndefine {
-		test.Fail()
-		return errorPoolUndefine, isErrorPoolUndefine
-	}
-
-	return virest.Error{}, false
-}
