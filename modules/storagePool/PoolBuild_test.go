@@ -198,6 +198,18 @@ func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
 	}
 }
 
+func (poolConnection *poolConnection) helperTestPoolBuild(test *testing.T, poolUuid string, option libvirt.StoragePoolBuildFlags) (virest.Error, bool) {
+	test.Helper()
+
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, option)
+	if isErrorPoolBuild {
+		test.Fail()
+		return errorPoolBuild, isErrorPoolBuild
+	}
+
+	return virest.Error{}, false
+}
+
 func (poolConnection *poolConnection) helperTestPoolDefine(test *testing.T, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (string, virest.Error, bool) {
 	test.Helper()
 
