@@ -85,6 +85,14 @@ func TestPoolCreateActionBuildCreateAndStartingPoolNoOverwriteDataInDirectory(te
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+		test,
+		filesystemDiskDeviceValue,
+	)
+	if isErrorGetStoragePoolFilesystemStruct {
+		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
+	}
+
 	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, 1)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
@@ -120,6 +128,14 @@ func TestPoolCreateActionBuildCreateAndStartingPoolOverwriteDataInDirectory(test
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+		test,
+		filesystemDiskDeviceValue,
+	)
+	if isErrorGetStoragePoolFilesystemStruct {
+		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
+	}
+
 	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, 1)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
@@ -140,6 +156,11 @@ func TestPoolCreateActionBuildCreateAndStartingPoolOverwriteDataInDirectory(test
 
 		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
 			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		}
+
+		errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue)
+		if isErrorDeletePartition {
+			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
 		}
 	})
 
