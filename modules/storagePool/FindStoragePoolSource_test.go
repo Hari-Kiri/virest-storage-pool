@@ -8,7 +8,7 @@ import (
 
 const (
 	netfsHost = "192.168.122.4"
-	iscsiHost = "192.168.66.12"
+	iscsiHost = "192.168.122.6"
 )
 
 func TestFindStoragePoolSourceNetfs(test *testing.T) {
