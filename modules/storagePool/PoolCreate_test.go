@@ -2,7 +2,22 @@ package storagePool
 
 import (
 	"testing"
+
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
+	"libvirt.org/go/libvirt"
 )
+
+func (poolConnection *poolConnection) helperTestPoolCreate(test *testing.T, poolUuid string, option libvirt.StoragePoolCreateFlags) (virest.Error, bool) {
+	test.Helper()
+
+	errorPoolCreate, isErrorPoolCreate := poolConnection.PoolCreate(poolUuid, option)
+	if isErrorPoolCreate {
+		test.Fail()
+		return errorPoolCreate, isErrorPoolCreate
+	}
+
+	return virest.Error{}, false
+}
 
 func TestPoolCreateActionStartingPool(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
@@ -85,7 +100,7 @@ func TestPoolCreateActionBuildCreateAndStartingPoolNoOverwriteDataInDirectory(te
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
 		test,
 		filesystemDiskDeviceValue,
 	)
@@ -128,7 +143,7 @@ func TestPoolCreateActionBuildCreateAndStartingPoolOverwriteDataInDirectory(test
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
 		test,
 		filesystemDiskDeviceValue,
 	)

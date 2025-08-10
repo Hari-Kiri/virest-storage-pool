@@ -109,7 +109,7 @@ func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
 		test,
 		filesystemDiskDeviceValue,
 	)
@@ -149,7 +149,7 @@ func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
 		test,
 		filesystemDiskDeviceValue,
 	)

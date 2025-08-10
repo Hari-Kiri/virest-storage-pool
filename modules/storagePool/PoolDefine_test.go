@@ -48,7 +48,7 @@ func (poolConnection *poolConnection) helperTestPoolDefine(test *testing.T, stor
 	return result.Uuid, virest.Error{}, false
 }
 
-func helperGetStoragePoolFilesystemStruct(test *testing.T, diskDevice filesystemDiskDevice) (libvirtxml.StoragePool, virest.Error, bool) {
+func (poolConnection *poolConnection) helperGetStoragePoolFilesystemStruct(test *testing.T, diskDevice filesystemDiskDevice) (libvirtxml.StoragePool, virest.Error, bool) {
 	test.Helper()
 
 	errorCreateNewSinglePrimaryPartitionOnInternalDiskDevice,
@@ -153,7 +153,7 @@ func TestPoolDefineOptionValidate(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helperGetStoragePoolFilesystemStruct(
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
 		test,
 		filesystemDiskDeviceValue,
 	)
