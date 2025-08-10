@@ -11,8 +11,24 @@ import (
 
 const hypervisorUri = "qemu:///system"
 
-func TestConnection(test *testing.T) {
-	virestConnection, errorConnect, isErrorConnect := utils.NewConnectWithAuth(hypervisorUri, nil, 0)
+func TestConnectionReadOnly(test *testing.T) {
+	virestConnection, errorConnect, isErrorConnect := utils.NewConnectWithAuth(hypervisorUri, nil, libvirt.CONNECT_RO)
+	if isErrorConnect {
+		test.Fatalf("connection test failed: %s", errorConnect.Message)
+	}
+
+	result, errorResult := virestConnection.Close()
+	if errorResult != nil {
+		test.Fatalf("close() error: %s", errorResult.Error())
+	}
+	if result != 0 {
+		test.Errorf("close() == %d, expected 0", result)
+	}
+}
+
+// Not trying to resolve URI aliases
+func TestConnectionNoAliases(test *testing.T) {
+	virestConnection, errorConnect, isErrorConnect := utils.NewConnectWithAuth(hypervisorUri, nil, libvirt.CONNECT_RO)
 	if isErrorConnect {
 		test.Fatalf("connection test failed: %s", errorConnect.Message)
 	}
@@ -29,7 +45,7 @@ func TestConnection(test *testing.T) {
 func helperTestConnection(test *testing.T) (*poolConnection, virest.Error, bool) {
 	test.Helper()
 
-	virestConnection, errorConnect, isErrorConnect := utils.NewConnectWithAuth(hypervisorUri, nil, 0)
+	virestConnection, errorConnect, isErrorConnect := utils.NewConnectWithAuth(hypervisorUri, nil, libvirt.CONNECT_NO_ALIASES)
 	if isErrorConnect {
 		test.Fail()
 		return &poolConnection{}, errorConnect, true
