@@ -6,6 +6,7 @@ import (
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/libvirtxml"
 )
 
+// Change it to Your's.
 const (
 	netfsHost = "192.168.122.4"
 	iscsiHost = "192.168.122.6"
