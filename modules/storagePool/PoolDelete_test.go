@@ -61,7 +61,7 @@ func TestPoolDeleteMetadaOnly(test *testing.T) {
 	}
 }
 
-// Unsupported in libvirt version 10.0.0
+// Unsupported in libvirt version 10.0.0 and virsh (the libvirt command line interface) still not implement this method.
 func TestPoolDeleteClearAllToZeros(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
