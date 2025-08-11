@@ -13,13 +13,13 @@ func TestPoolBuildFromScratch(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
@@ -32,26 +32,26 @@ func TestPoolBuildFromScratch(test *testing.T) {
 		}
 	})
 
-	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, 0)
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_NEW)
 	if isErrorPoolBuild {
 		test.Errorf("build pool from scratch test failed: %s", errorPoolBuild.Message)
 	}
 }
 
-// Unsupported in libvirt version 10.0.0
+// Unsupported in libvirt version 10.0.0 and virsh (the libvirt command line interface) still not implement this method.
 func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
@@ -64,26 +64,26 @@ func TestPoolBuildRepairOrReinitilize(test *testing.T) {
 		}
 	})
 
-	errorPoolBuildRepairOrReinitialize, isErrorPoolBuildRepairOrReinitialize := poolConnection.PoolBuild(poolUuid, 1)
+	errorPoolBuildRepairOrReinitialize, isErrorPoolBuildRepairOrReinitialize := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_REPAIR)
 	if isErrorPoolBuildRepairOrReinitialize {
 		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuildRepairOrReinitialize.Message)
 	}
 }
 
-// Unsupported in libvirt version 10.0.0
+// Unsupported in libvirt version 10.0.0 and virsh (the libvirt command line interface) still not implement this method.
 func TestPoolBuildExtendExistingPool(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
 	if isErrorGetPoolConnection {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 1)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
@@ -96,7 +96,7 @@ func TestPoolBuildExtendExistingPool(test *testing.T) {
 		}
 	})
 
-	errorPoolBuildExtendExistingPool, isErrorPoolBuildExtendExistingPool := poolConnection.PoolBuild(poolUuid, 2)
+	errorPoolBuildExtendExistingPool, isErrorPoolBuildExtendExistingPool := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_RESIZE)
 	if isErrorPoolBuildExtendExistingPool {
 		test.Errorf("extend existing pool test failed: %s", errorPoolBuildExtendExistingPool.Message)
 	}
@@ -117,13 +117,13 @@ func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
 		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, 1)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
@@ -136,7 +136,10 @@ func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
 		}
 	})
 
-	errorPoolBuildFilesystemNotOverwriteExistingPool, isErrorPoolBuildFilesystemNotOverwriteExistingPool := poolConnection.PoolBuild(poolUuid, 4)
+	errorPoolBuildFilesystemNotOverwriteExistingPool, isErrorPoolBuildFilesystemNotOverwriteExistingPool := poolConnection.PoolBuild(
+		poolUuid,
+		libvirt.STORAGE_POOL_BUILD_NO_OVERWRITE,
+	)
 	if isErrorPoolBuildFilesystemNotOverwriteExistingPool {
 		test.Errorf("build not overwrite existing filesystem pool test failed: %s", errorPoolBuildFilesystemNotOverwriteExistingPool.Message)
 	}
@@ -157,13 +160,13 @@ func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
 		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, 1)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, 0); isErrorPoolDelete {
+		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
@@ -181,7 +184,7 @@ func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
 		}
 	})
 
-	errorPoolBuildFilesystemOverwriteData, isErrorPoolBuildFilesystemOverwriteData := poolConnection.PoolBuild(poolUuid, 8)
+	errorPoolBuildFilesystemOverwriteData, isErrorPoolBuildFilesystemOverwriteData := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_OVERWRITE)
 	if isErrorPoolBuildFilesystemOverwriteData {
 		test.Errorf("build and overwrite existing filesystem pool test failed: %s", errorPoolBuildFilesystemOverwriteData.Message)
 	}
