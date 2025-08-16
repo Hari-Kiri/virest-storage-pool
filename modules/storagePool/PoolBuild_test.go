@@ -134,6 +134,10 @@ func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
 		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
 			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
+
+		if errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue); isErrorDeletePartition {
+			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
+		}
 	})
 
 	errorPoolBuildFilesystemNotOverwriteExistingPool, isErrorPoolBuildFilesystemNotOverwriteExistingPool := poolConnection.PoolBuild(
