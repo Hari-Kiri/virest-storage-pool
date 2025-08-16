@@ -132,11 +132,10 @@ func TestPoolDefineNoOption(test *testing.T) {
 
 	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 0)
 	if isErrorPoolDefine {
-		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
+		test.Errorf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-
 		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
@@ -163,11 +162,10 @@ func TestPoolDefineOptionValidate(test *testing.T) {
 
 	poolDefine, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(storagePoolFilesystem, 1)
 	if isErrorPoolDefine {
-		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
+		test.Errorf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-
 		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolDefine.Uuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
