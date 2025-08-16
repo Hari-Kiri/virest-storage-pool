@@ -17,7 +17,7 @@ func GetGid(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        getGid.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.HttpRequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,

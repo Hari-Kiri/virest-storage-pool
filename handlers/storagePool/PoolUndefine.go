@@ -17,7 +17,7 @@ func PoolUndefine(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolUndefine.Response
 	)
 
-	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.HttpRequestPrecondition(
 		request,
 		http.MethodDelete,
 		&requestBodyData,

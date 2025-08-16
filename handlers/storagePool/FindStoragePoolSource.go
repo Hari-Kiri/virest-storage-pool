@@ -17,7 +17,7 @@ func FindStoragePoolSource(responseWriter http.ResponseWriter, request *http.Req
 		httpBody        findStoragePoolSources.Response
 	)
 
-	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.HttpRequestPrecondition(
 		request,
 		http.MethodPost,
 		&requestBodyData,

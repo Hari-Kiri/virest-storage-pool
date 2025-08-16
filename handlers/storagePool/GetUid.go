@@ -17,7 +17,7 @@ func GetUid(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        getUid.Response
 	)
 
-	connection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	connection, errorRequestPrecondition, isError := storagePool.HttpRequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,

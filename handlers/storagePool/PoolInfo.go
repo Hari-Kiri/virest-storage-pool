@@ -17,7 +17,7 @@ func PoolInfo(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolInfo.Response
 	)
 
-	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.HttpRequestPrecondition(
 		request,
 		http.MethodGet,
 		&requestBodyData,

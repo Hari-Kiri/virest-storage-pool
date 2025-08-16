@@ -17,7 +17,7 @@ func PoolDelete(responseWriter http.ResponseWriter, request *http.Request) {
 		httpBody        poolDelete.Response
 	)
 
-	poolConnection, errorRequestPrecondition, isError := storagePool.RequestPrecondition(
+	poolConnection, errorRequestPrecondition, isError := storagePool.HttpRequestPrecondition(
 		request,
 		http.MethodDelete,
 		&requestBodyData,
