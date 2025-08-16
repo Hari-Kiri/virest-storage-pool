@@ -160,7 +160,7 @@ func TestPoolDefineOptionValidate(test *testing.T) {
 		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
 	}
 
-	poolDefine, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(storagePoolFilesystem, 1)
+	poolDefine, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Errorf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
