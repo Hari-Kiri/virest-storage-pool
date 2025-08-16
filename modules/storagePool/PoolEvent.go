@@ -51,17 +51,6 @@ func (poolConnection *poolConnection) PoolEvent(poolUuid string, types uint) (po
 		Event: 6,
 	}
 
-	if types < 0 {
-		virestError.Error = libvirt.Error{
-			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
-			Domain:  libvirt.FROM_EVENT,
-			Message: fmt.Sprintf("no event type: %d", types),
-			Level:   libvirt.ERR_ERROR,
-		}
-		isError = true
-		return result, virestError, isError
-	}
-
 	if types > 1 {
 		virestError.Error = libvirt.Error{
 			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
@@ -161,15 +150,6 @@ func (poolConnection *poolConnection) PoolEventTimeout(poolUuid string, httpResp
 		Event: 6,
 	}
 
-	if types < 0 {
-		virestError.Error = libvirt.Error{
-			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
-			Domain:  libvirt.FROM_EVENT,
-			Message: fmt.Sprintf("no event type: %d", types),
-			Level:   libvirt.ERR_ERROR,
-		}
-		isError = true
-	}
 	if types > 1 {
 		virestError.Error = libvirt.Error{
 			Code:    libvirt.ERR_STORAGE_PROBE_FAILED,
