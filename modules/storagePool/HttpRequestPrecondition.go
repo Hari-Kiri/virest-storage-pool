@@ -16,7 +16,7 @@ import (
 // Connection pointer to the targeted hypervisor for storage pool management purposes.
 type poolConnection virest.Connection
 
-// This function simplifies the preconditioning process after a request from a client occurs:
+// This function simplifies the preconditioning process after a HTTP request from a client occurs:
 //
 //   - Validate user request using given bearer token which is generated JWT by ViRest Utilities 'auth.BasicAuth()' module.
 //
@@ -37,7 +37,7 @@ type poolConnection virest.Connection
 // Notes for HTTP POST, PUT, PATCH and DELETE method:
 //
 //   - This function always looking for request body for data and parse them to 'structure' parameter.
-func RequestPrecondition[RequestStructure utils.RequestStructure](
+func HttpRequestPrecondition[RequestStructure utils.RequestStructure](
 	httpRequest *http.Request,
 	expectedRequestMethod string,
 	structure *RequestStructure,
