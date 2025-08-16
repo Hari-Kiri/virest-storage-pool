@@ -1,6 +1,10 @@
 package storagePool
 
-import "testing"
+import (
+	"testing"
+
+	"libvirt.org/go/libvirt"
+)
 
 func TestPoolAutostartTrue(test *testing.T) {
 	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
@@ -8,7 +12,7 @@ func TestPoolAutostartTrue(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 0)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
@@ -35,7 +39,7 @@ func TestPoolAutostartFalse(test *testing.T) {
 		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 0)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
