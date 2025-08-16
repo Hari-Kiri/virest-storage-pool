@@ -47,11 +47,6 @@ func TestPoolDestroy(test *testing.T) {
 		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
 			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
-
-		errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue)
-		if isErrorDeletePartition {
-			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
-		}
 	})
 
 	errorPoolDestroy, isErrorPoolDestroy := poolConnection.PoolDestroy(poolUuid)
