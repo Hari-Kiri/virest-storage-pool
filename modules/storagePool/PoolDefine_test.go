@@ -174,8 +174,7 @@ func TestPoolDefineOptionValidate(test *testing.T) {
 			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
 		}
 
-		errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue)
-		if isErrorDeletePartition {
+		if errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue); isErrorDeletePartition {
 			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
 		}
 	})
