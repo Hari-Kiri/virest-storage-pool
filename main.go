@@ -12,15 +12,19 @@ import (
 )
 
 func main() {
-	// Read .env file
 	readEnvFile, errorReadEnvFile := os.ReadFile(".env")
 	if errorReadEnvFile != nil {
 		temboLog.FatalLogging("failed read env file:", errorReadEnvFile)
 	}
 
-	// Set environment variables based on .env file
 	rows := strings.Split(string(readEnvFile), "\n")
 	for i := 0; i < len(rows); i++ {
+		if len(rows[i]) == 0 {
+			continue
+		}
+		if len(rows[i]) >= 1 && string(rows[i][0]) == "#" {
+			continue
+		}
 		columns := strings.Split(rows[i], "=")
 		os.Setenv(columns[0], columns[1])
 	}
