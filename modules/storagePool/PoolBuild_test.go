@@ -1,205 +1,316 @@
 package storagePool
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolBuild"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
 
 func TestPoolBuildFromScratch(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	helper := helperTest{
+		test: test,
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
-	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
-		}
+	var incomingRequest poolBuild.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/build",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", poolUuid, libvirt.STORAGE_POOL_BUILD_NEW),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
 
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
-			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
-		}
-
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
-		}
-	})
-
-	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_NEW)
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
 	if isErrorPoolBuild {
 		test.Errorf("build pool from scratch test failed: %s", errorPoolBuild.Message)
 	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
 }
 
 // Unsupported in libvirt version 10.0.0 and virsh (the libvirt command line interface) still not implement this method.
-func TestPoolBuildRepairOrReinitilize(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+func TestPoolBuildRepairOrReinitialize(test *testing.T) {
+	helper := helperTest{
+		test: test,
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helper.helperGetStoragePoolFilesystemStruct(
+		filesystemDiskDeviceValue,
+	)
+	if isErrorGetStoragePoolFilesystemStruct {
+		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
+	var incomingRequest poolBuild.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/build",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", poolUuid, libvirt.STORAGE_POOL_BUILD_REPAIR),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
+	if isErrorPoolBuild {
+		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuild.Message)
+	}
+
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
+		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
 			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
 		}
 
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
 
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+
+		if errorDeletePartition, isErrorDeletePartition := helper.helperDepleteDevicePartition(filesystemDiskDeviceValue); isErrorDeletePartition {
+			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
 		}
 	})
-
-	errorPoolBuildRepairOrReinitialize, isErrorPoolBuildRepairOrReinitialize := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_REPAIR)
-	if isErrorPoolBuildRepairOrReinitialize {
-		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuildRepairOrReinitialize.Message)
-	}
 }
 
 // Unsupported in libvirt version 10.0.0 and virsh (the libvirt command line interface) still not implement this method.
 func TestPoolBuildExtendExistingPool(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	helper := helperTest{
+		test: test,
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
-	if isErrorPoolDefine {
-		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
-	}
-
-	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
-		}
-
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
-			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
-		}
-
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
-		}
-	})
-
-	errorPoolBuildExtendExistingPool, isErrorPoolBuildExtendExistingPool := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_RESIZE)
-	if isErrorPoolBuildExtendExistingPool {
-		test.Errorf("extend existing pool test failed: %s", errorPoolBuildExtendExistingPool.Message)
-	}
-}
-
-// Currently only filesystem pool accepts flags VIR_STORAGE_POOL_BUILD_OVERWRITE (option 4).
-func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
-	}
-
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
-		test,
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helper.helperGetStoragePoolFilesystemStruct(
 		filesystemDiskDeviceValue,
 	)
 	if isErrorGetStoragePoolFilesystemStruct {
 		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
 	if isErrorPoolDefine {
 		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
 	}
 
-	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
-		}
-
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
-			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
-		}
-
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
-		}
-
-		if errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue); isErrorDeletePartition {
-			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
-		}
-	})
-
-	errorPoolBuildFilesystemNotOverwriteExistingPool, isErrorPoolBuildFilesystemNotOverwriteExistingPool := poolConnection.PoolBuild(
-		poolUuid,
-		libvirt.STORAGE_POOL_BUILD_NO_OVERWRITE,
-	)
-	if isErrorPoolBuildFilesystemNotOverwriteExistingPool {
-		test.Errorf("build not overwrite existing filesystem pool test failed: %s", errorPoolBuildFilesystemNotOverwriteExistingPool.Message)
-	}
-}
-
-// Currently only filesystem pool accepts flags VIR_STORAGE_POOL_BUILD_NO_OVERWRITE (option 8).
-func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
-	}
-
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
+	var incomingRequest poolBuild.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
 		test,
-		filesystemDiskDeviceValue,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/build",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", poolUuid, libvirt.STORAGE_POOL_BUILD_RESIZE),
+		&incomingRequest,
 	)
-	if isErrorGetStoragePoolFilesystemStruct {
-		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
-	if isErrorPoolDefine {
-		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
-	}
-
-	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := poolConnection.helperTestPoolDelete(test, poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
-		}
-
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
-			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
-		}
-
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
-		}
-
-		errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue)
-		if isErrorDeletePartition {
-			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
-		}
-	})
-
-	errorPoolBuildFilesystemOverwriteData, isErrorPoolBuildFilesystemOverwriteData := poolConnection.PoolBuild(poolUuid, libvirt.STORAGE_POOL_BUILD_OVERWRITE)
-	if isErrorPoolBuildFilesystemOverwriteData {
-		test.Errorf("build and overwrite existing filesystem pool test failed: %s", errorPoolBuildFilesystemOverwriteData.Message)
-	}
-}
-
-func (poolConnection *poolConnection) helperTestPoolBuild(test *testing.T, poolUuid string, option libvirt.StoragePoolBuildFlags) (virest.Error, bool) {
-	test.Helper()
-
-	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(poolUuid, option)
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
 	if isErrorPoolBuild {
-		test.Fail()
+		test.Errorf("extend existing pool test failed: %s", errorPoolBuild.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+
+		if errorDeletePartition, isErrorDeletePartition := helper.helperDepleteDevicePartition(filesystemDiskDeviceValue); isErrorDeletePartition {
+			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
+		}
+	})
+}
+
+// Currently only filesystem pool accepts flags VIR_STORAGE_POOL_BUILD_NO_OVERWRITE (option 4).
+func TestPoolBuildFilesystemNotOverwriteExistingPool(test *testing.T) {
+	helper := helperTest{
+		test: test,
+	}
+
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helper.helperGetStoragePoolFilesystemStruct(
+		filesystemDiskDeviceValue,
+	)
+	if isErrorGetStoragePoolFilesystemStruct {
+		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	var incomingRequest poolBuild.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/build",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", poolUuid, libvirt.STORAGE_POOL_BUILD_NO_OVERWRITE),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
+	if isErrorPoolBuild {
+		test.Errorf("build not overwrite existing filesystem pool test failed: %s", errorPoolBuild.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+
+		if errorDeletePartition, isErrorDeletePartition := helper.helperDepleteDevicePartition(filesystemDiskDeviceValue); isErrorDeletePartition {
+			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
+		}
+	})
+}
+
+// Currently only filesystem pool accepts flags VIR_STORAGE_POOL_BUILD_OVERWRITE (option 8).
+func TestPoolBuildFilesystemOverwriteData(test *testing.T) {
+	helper := helperTest{
+		test: test,
+	}
+
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helper.helperGetStoragePoolFilesystemStruct(
+		filesystemDiskDeviceValue,
+	)
+	if isErrorGetStoragePoolFilesystemStruct {
+		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	var incomingRequest poolBuild.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/build",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", poolUuid, libvirt.STORAGE_POOL_BUILD_OVERWRITE),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
+	if isErrorPoolBuild {
+		test.Errorf("build and overwrite existing filesystem pool test failed: %s", errorPoolBuild.Message)
+	}
+
+	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
+			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
+		}
+
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+
+		if errorDeletePartition, isErrorDeletePartition := helper.helperDepleteDevicePartition(filesystemDiskDeviceValue); isErrorDeletePartition {
+			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
+		}
+	})
+}
+
+func (helper helperTest) helperTestPoolBuild(poolUuid string, option libvirt.StoragePoolBuildFlags) (virest.Error, bool) {
+	helper.test.Helper()
+
+	var incomingRequest poolBuild.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		helper.test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/build",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", poolUuid, option),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		helper.test.Fail()
+		return errorHttpRequestPrecondition, isErrorHttpRequestPrecondition
+	}
+	defer poolConnection.Close()
+
+	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
+	if isErrorPoolBuild {
+		helper.test.Fail()
 		return errorPoolBuild, isErrorPoolBuild
 	}
 

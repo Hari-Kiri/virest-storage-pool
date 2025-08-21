@@ -1,10 +1,13 @@
 package storagePool
 
 import (
+	"encoding/json"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDefine"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
@@ -36,20 +39,52 @@ var filesystemDiskDeviceValue = filesystemDiskDevice{
 	partitionTable: "gpt",
 }
 
-func (poolConnection *poolConnection) helperTestPoolDefine(test *testing.T, storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (string, virest.Error, bool) {
-	test.Helper()
+func (helper helperTest) helperTestPoolDefine(storagePool libvirtxml.StoragePool, option libvirt.StoragePoolDefineFlags) (string, virest.Error, bool) {
+	helper.test.Helper()
 
-	result, errorPoolDefine, isErrorPoolDevine := poolConnection.PoolDefine(storagePool, option)
+	requestData := poolDefine.Request{
+		Option:      option,
+		StoragePool: storagePool,
+	}
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+	requestBody, errorMarshalStoragePool := json.Marshal(requestData)
+	virestError.Error, isError = errorMarshalStoragePool.(libvirt.Error)
+	if isError {
+		helper.test.Fail()
+		return "", virestError, isError
+	}
+
+	var incomingRequest poolDefine.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		helper.test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/define",
+		http.MethodPost,
+		requestBody,
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		helper.test.Fail()
+		return "", errorHttpRequestPrecondition, isErrorHttpRequestPrecondition
+	}
+	defer poolConnection.Close()
+
+	result, errorPoolDefine, isErrorPoolDevine := poolConnection.PoolDefine(incomingRequest.StoragePool, incomingRequest.Option)
 	if isErrorPoolDevine {
-		test.Fail()
+		helper.test.Fail()
 		return "", errorPoolDefine, isErrorPoolDevine
 	}
 
 	return result.Uuid, virest.Error{}, false
 }
 
-func (poolConnection *poolConnection) helperGetStoragePoolFilesystemStruct(test *testing.T, diskDevice filesystemDiskDevice) (libvirtxml.StoragePool, virest.Error, bool) {
-	test.Helper()
+func (helper helperTest) helperGetStoragePoolFilesystemStruct(diskDevice filesystemDiskDevice) (libvirtxml.StoragePool, virest.Error, bool) {
+	helper.test.Helper()
 
 	errorCreateNewSinglePrimaryPartitionOnInternalDiskDevice,
 		isErrorCreateNewSinglePrimaryPartitionOnInternalDiskDevice := utils.CreateNewSinglePrimaryPartitionOnInternalDiskDevice(
@@ -58,7 +93,7 @@ func (poolConnection *poolConnection) helperGetStoragePoolFilesystemStruct(test 
 		diskDevice.partitionTable,
 	)
 	if isErrorCreateNewSinglePrimaryPartitionOnInternalDiskDevice {
-		test.Fail()
+		helper.test.Fail()
 		return libvirtxml.StoragePool{}, errorCreateNewSinglePrimaryPartitionOnInternalDiskDevice, true
 	}
 
@@ -112,12 +147,12 @@ func (poolConnection *poolConnection) helperGetStoragePoolFilesystemStruct(test 
 	}, virest.Error{}, false
 }
 
-func helperDepleteDevicePartition(test *testing.T, diskDevice filesystemDiskDevice) (virest.Error, bool) {
-	test.Helper()
+func (helper helperTest) helperDepleteDevicePartition(diskDevice filesystemDiskDevice) (virest.Error, bool) {
+	helper.test.Helper()
 
 	errorDeletePrimaryPartition, isErrorDeletePartition := utils.DepleteDevicePartition(diskDevice.path, diskDevice.format)
 	if isErrorDeletePartition {
-		test.Fail()
+		helper.test.Fail()
 		return errorDeletePrimaryPartition, true
 	}
 
@@ -125,56 +160,113 @@ func helperDepleteDevicePartition(test *testing.T, diskDevice filesystemDiskDevi
 }
 
 func TestPoolDefineNoOption(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	helper := helperTest{
+		test: test,
 	}
 
-	poolUuid, errorPoolDefine, isErrorPoolDefine := poolConnection.helperTestPoolDefine(test, storagePoolDirectory, 0)
+	requestData := poolDefine.Request{
+		Option:      0,
+		StoragePool: storagePoolDirectory,
+	}
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+	requestBody, errorMarshalStoragePool := json.Marshal(requestData)
+	virestError.Error, isError = errorMarshalStoragePool.(libvirt.Error)
+	if isError {
+		test.Fatalf("marshaling request body failed: %s", virestError.Message)
+	}
+
+	var incomingRequest poolDefine.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/define",
+		http.MethodPost,
+		requestBody,
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	poolDefine, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(incomingRequest.StoragePool, incomingRequest.Option)
 	if isErrorPoolDefine {
 		test.Errorf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolUuid); isErrorPoolUndefine {
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolDefine.Uuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
 
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
 		}
 	})
 }
 
 func TestPoolDefineOptionValidate(test *testing.T) {
-	poolConnection, errorGetPoolConnection, isErrorGetPoolConnection := helperTestConnection(test)
-	if isErrorGetPoolConnection {
-		test.Fatalf("connecting to host storage pool failed: %s", errorGetPoolConnection.Message)
+	helper := helperTest{
+		test: test,
 	}
 
-	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := poolConnection.helperGetStoragePoolFilesystemStruct(
-		test,
+	storagePoolFilesystem, errorGetStoragePoolFilesystemStruct, isErrorGetStoragePoolFilesystemStruct := helper.helperGetStoragePoolFilesystemStruct(
 		filesystemDiskDeviceValue,
 	)
 	if isErrorGetStoragePoolFilesystemStruct {
 		test.Fatalf("get storage pool filesystem struct failed: %s", errorGetStoragePoolFilesystemStruct.Message)
 	}
 
-	poolDefine, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(storagePoolFilesystem, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	requestData := poolDefine.Request{
+		Option:      libvirt.STORAGE_POOL_DEFINE_VALIDATE,
+		StoragePool: storagePoolFilesystem,
+	}
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+	requestBody, errorMarshalStoragePool := json.Marshal(requestData)
+	virestError.Error, isError = errorMarshalStoragePool.(libvirt.Error)
+	if isError {
+		test.Fatalf("marshaling request body failed: %s", virestError.Message)
+	}
+
+	var incomingRequest poolDefine.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/define",
+		http.MethodPost,
+		requestBody,
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	poolDefine, errorPoolDefine, isErrorPoolDefine := poolConnection.PoolDefine(incomingRequest.StoragePool, incomingRequest.Option)
 	if isErrorPoolDefine {
 		test.Errorf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
 	test.Cleanup(func() {
-		if errorPoolUndefine, isErrorPoolUndefine := poolConnection.helperTestPoolUndefine(test, poolDefine.Uuid); isErrorPoolUndefine {
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolDefine.Uuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
 
-		if errorCloseConnection, isErrorCloseConnection := poolConnection.helperTestCloseConnection(test); isErrorCloseConnection {
-			test.Errorf("connection close() failed: %s", errorCloseConnection.Message)
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
 		}
 
-		if errorDeletePartition, isErrorDeletePartition := helperDepleteDevicePartition(test, filesystemDiskDeviceValue); isErrorDeletePartition {
+		if errorDeletePartition, isErrorDeletePartition := helper.helperDepleteDevicePartition(filesystemDiskDeviceValue); isErrorDeletePartition {
 			test.Errorf("delete primary partition failed: %s", errorDeletePartition.Message)
 		}
 	})
