@@ -3,7 +3,6 @@ package storagePool
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-utilities/utils"
@@ -60,18 +59,17 @@ func HttpRequestPrecondition[RequestStructure utils.RequestStructure](
 		}}, true
 	}
 
-	var (
-		virestConnection                      virest.Connection
-		waitGroup                             sync.WaitGroup
-		errorConnect, errorPrepareRequest     virest.Error
-		isErrorConnect, isErrorPrepareRequest bool
-	)
-	waitGroup.Add(2)
+	virestConnectionChannel := make(chan virest.Connection)
+	errorConnectChannel := make(chan virest.Error)
+	isErrorConnectChannel := make(chan bool)
 	go func() {
-		defer waitGroup.Done()
+		var (
+			virestConnection virest.Connection
+			errorConnect     virest.Error
+			isErrorConnect   bool
+		)
 
 		if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
-			isErrorConnect = true
 			errorConnect.Code = libvirt.ERR_INVALID_CONN
 			errorConnect.Domain = libvirt.FROM_NET
 			errorConnect.Message = "hypervisor uri not exist on request header"
@@ -80,6 +78,10 @@ func HttpRequestPrecondition[RequestStructure utils.RequestStructure](
 				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
 				errorConnect.Message,
 			)
+
+			isErrorConnectChannel <- true
+			errorConnectChannel <- errorConnect
+
 			return
 		}
 
@@ -90,23 +92,36 @@ func HttpRequestPrecondition[RequestStructure utils.RequestStructure](
 				errorConnect.Message,
 			)
 		}
-	}()
-	go func() {
-		defer waitGroup.Done()
 
-		errorPrepareRequest, isErrorPrepareRequest = utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
+		virestConnectionChannel <- virestConnection
+		errorConnectChannel <- errorConnect
+		isErrorConnectChannel <- isErrorConnect
+	}()
+
+	errorPrepareRequestChannel := make(chan virest.Error)
+	isErrorPrepareRequestChannel := make(chan bool)
+	go func() {
+		errorPrepareRequest, isErrorPrepareRequest := utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
 		if isErrorPrepareRequest {
 			temboLog.ErrorLogging(
 				"failed preparing request [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
 				errorPrepareRequest.Message,
 			)
 		}
-	}()
-	waitGroup.Wait()
 
+		errorPrepareRequestChannel <- errorPrepareRequest
+		isErrorPrepareRequestChannel <- isErrorPrepareRequest
+	}()
+
+	virestConnection := <-virestConnectionChannel
+	errorConnect := <-errorConnectChannel
+	isErrorConnect := <-isErrorConnectChannel
 	if isErrorConnect {
 		return poolConnection{}, errorConnect, isErrorConnect
 	}
+
+	errorPrepareRequest := <-errorPrepareRequestChannel
+	isErrorPrepareRequest := <-isErrorPrepareRequestChannel
 	if isErrorPrepareRequest {
 		virestConnection.Close()
 		return poolConnection{}, errorPrepareRequest, isErrorPrepareRequest
