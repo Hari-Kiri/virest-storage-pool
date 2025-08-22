@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-utilities/utils"
 	"github.com/Hari-Kiri/virest-utilities/utils/auth"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
@@ -70,28 +69,23 @@ func HttpRequestPrecondition[RequestStructure utils.RequestStructure](
 		)
 
 		if len(httpRequest.Header["Hypervisor-Uri"]) == 0 {
-			errorConnect.Code = libvirt.ERR_INVALID_CONN
-			errorConnect.Domain = libvirt.FROM_NET
-			errorConnect.Message = "hypervisor uri not exist on request header"
-			errorConnect.Level = libvirt.ERR_ERROR
-			temboLog.ErrorLogging(
-				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				errorConnect.Message,
-			)
+			virestConnection = virest.Connection{}
+			errorConnect = virest.Error{Error: libvirt.Error{
+				Code:    libvirt.ERR_INVALID_CONN,
+				Domain:  libvirt.FROM_NET,
+				Message: "hypervisor uri not exist on request header",
+				Level:   libvirt.ERR_ERROR,
+			}}
+			isErrorConnect = true
 
-			isErrorConnectChannel <- true
+			virestConnectionChannel <- virestConnection
 			errorConnectChannel <- errorConnect
+			isErrorConnectChannel <- isErrorConnect
 
 			return
 		}
 
 		virestConnection, errorConnect, isErrorConnect = utils.NewConnectWithAuth(httpRequest.Header["Hypervisor-Uri"][0], nil, 0)
-		if isErrorConnect {
-			temboLog.ErrorLogging(
-				"failed connect to hypervisor [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				errorConnect.Message,
-			)
-		}
 
 		virestConnectionChannel <- virestConnection
 		errorConnectChannel <- errorConnect
@@ -102,12 +96,6 @@ func HttpRequestPrecondition[RequestStructure utils.RequestStructure](
 	isErrorPrepareRequestChannel := make(chan bool)
 	go func() {
 		errorPrepareRequest, isErrorPrepareRequest := utils.CheckRequest(httpRequest, expectedRequestMethod, structure)
-		if isErrorPrepareRequest {
-			temboLog.ErrorLogging(
-				"failed preparing request [ "+httpRequest.URL.Path+" ], requested from "+httpRequest.RemoteAddr+":",
-				errorPrepareRequest.Message,
-			)
-		}
 
 		errorPrepareRequestChannel <- errorPrepareRequest
 		isErrorPrepareRequestChannel <- isErrorPrepareRequest
