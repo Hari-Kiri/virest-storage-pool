@@ -2,7 +2,6 @@ package storagePool
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolInfo"
@@ -24,15 +23,8 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 		return poolInfo.Info{}, virestError, true
 	}
 
-	var (
-		result    poolInfo.Info
-		waitGroup sync.WaitGroup
-	)
-	result.Uuid = uuid
-	waitGroup.Add(4)
+	storagePoolNameChannel := make(chan string)
 	go func() {
-		defer waitGroup.Done()
-
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
@@ -46,11 +38,14 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			return
 		}
 
-		result.Name = storagePoolName
+		storagePoolNameChannel <- storagePoolName
 	}()
-	go func() {
-		defer waitGroup.Done()
 
+	storagePoolStateChannel := make(chan libvirt.StoragePoolState)
+	storagePoolCapacityChannel := make(chan uint64)
+	storagePoolAllocationChannel := make(chan uint64)
+	storagePoolAvailableChannel := make(chan uint64)
+	go func() {
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
@@ -64,14 +59,14 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			return
 		}
 
-		result.State = storagePoolInfo.State
-		result.Capacity = storagePoolInfo.Capacity
-		result.Allocation = storagePoolInfo.Allocation
-		result.Available = storagePoolInfo.Available
+		storagePoolStateChannel <- storagePoolInfo.State
+		storagePoolCapacityChannel <- storagePoolInfo.Capacity
+		storagePoolAllocationChannel <- storagePoolInfo.Allocation
+		storagePoolAvailableChannel <- storagePoolInfo.Available
 	}()
-	go func() {
-		defer waitGroup.Done()
 
+	storagePoolAutostartChannel := make(chan bool)
+	go func() {
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
@@ -85,11 +80,11 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			return
 		}
 
-		result.Autostart = storagePoolAutostart
+		storagePoolAutostartChannel <- storagePoolAutostart
 	}()
-	go func() {
-		defer waitGroup.Done()
 
+	storagePoolPersistentChannel := make(chan bool)
+	go func() {
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		if errorGetStoragePoolRef != nil {
 			temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
@@ -103,9 +98,17 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			return
 		}
 
-		result.Persistent = storagePoolPersistent
+		storagePoolPersistentChannel <- storagePoolPersistent
 	}()
-	waitGroup.Wait()
 
-	return result, virestError, false
+	return poolInfo.Info{
+		Uuid:       uuid,
+		Name:       <-storagePoolNameChannel,
+		State:      <-storagePoolStateChannel,
+		Capacity:   <-storagePoolCapacityChannel,
+		Allocation: <-storagePoolAllocationChannel,
+		Available:  <-storagePoolAvailableChannel,
+		Autostart:  <-storagePoolAutostartChannel,
+		Persistent: <-storagePoolPersistentChannel,
+	}, virestError, false
 }
