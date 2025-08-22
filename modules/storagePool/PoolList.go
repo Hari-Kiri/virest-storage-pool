@@ -27,14 +27,17 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 	}
 
 	result := make([]poolList.Data, len(storagePools))
+	storagePoolDetailUuidChannel := make(chan string)
+	storagePoolDetailNameChannel := make(chan string)
+	storagePoolDetailCapacityChannel := make(chan libvirtxml.StoragePoolSize)
+	storagePoolDetailAllocationChannel := make(chan libvirtxml.StoragePoolSize)
+	storagePoolDetailAvailableChannel := make(chan libvirtxml.StoragePoolSize)
+	storagePoolDetailStateChannel := make(chan libvirt.StoragePoolState)
+	storagePoolDetailAutostartChannel := make(chan bool)
+	storagePoolDetailPersistentChannel := make(chan bool)
 	for i := 0; i < len(storagePools); i++ {
 		defer storagePools[i].Free()
 
-		storagePoolDetailUuidChannel := make(chan string)
-		storagePoolDetailNameChannel := make(chan string)
-		storagePoolDetailCapacityChannel := make(chan libvirtxml.StoragePoolSize)
-		storagePoolDetailAllocationChannel := make(chan libvirtxml.StoragePoolSize)
-		storagePoolDetailAvailableChannel := make(chan libvirtxml.StoragePoolSize)
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
@@ -56,7 +59,6 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 			storagePoolDetailAvailableChannel <- *storagePoolDetail.Available
 		}(storagePools[i])
 
-		storagePoolDetailStateChannel := make(chan libvirt.StoragePoolState)
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
@@ -74,7 +76,6 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 			storagePoolDetailStateChannel <- storagePoolInfo.State
 		}(storagePools[i])
 
-		storagePoolDetailAutostartChannel := make(chan bool)
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
@@ -92,7 +93,6 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 			storagePoolDetailAutostartChannel <- storagePoolAutostart
 		}(storagePools[i])
 
-		storagePoolDetailPersistentChannel := make(chan bool)
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
