@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Hari-Kiri/virest-storage-pool/structures/poolDetail"
+	"github.com/Hari-Kiri/virest-storage-pool/structures/poolInfo"
 	"libvirt.org/go/libvirt"
 )
 
@@ -32,7 +32,7 @@ func TestPoolInfo(test *testing.T) {
 		test.Fatalf("creating pool test failed: %s", errorPoolCreate.Message)
 	}
 
-	var incomingRequest poolDetail.Request
+	var incomingRequest poolInfo.Request
 	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
 		test,
 		"/home/hari/virest-storage-pool/.env",
@@ -47,9 +47,9 @@ func TestPoolInfo(test *testing.T) {
 		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition)
 	}
 
-	poolInfo, errorGetPoolDetail, isErrorGetPoolDetail := poolConnection.PoolInfo(incomingRequest.Uuid)
-	if isErrorGetPoolDetail {
-		test.Errorf("get pool detail test failed: %s", errorGetPoolDetail.Message)
+	poolInfo, errorGetPoolInfo, isErrorGetPoolInfo := poolConnection.PoolInfo(incomingRequest.Uuid)
+	if isErrorGetPoolInfo {
+		test.Errorf("get pool info test failed: %s", errorGetPoolInfo.Message)
 	}
 	poolInfolMarshaled, errorMarshalingPoolInfo := json.MarshalIndent(poolInfo, "", "  ")
 	if errorMarshalingPoolInfo != nil {
