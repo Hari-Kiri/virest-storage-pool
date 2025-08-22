@@ -2,12 +2,12 @@ package storagePool
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolList"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
+	"libvirt.org/go/libvirtxml"
 )
 
 // Collect the list of storage pools, and allocate an array to store those objects.
@@ -26,90 +26,99 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 		return nil, virestError, true
 	}
 
-	var waitGroup sync.WaitGroup
 	result := make([]poolList.Data, len(storagePools))
-	waitGroup.Add(len(storagePools) * 4)
 	for i := 0; i < len(storagePools); i++ {
 		defer storagePools[i].Free()
 
-		go func(index int) {
-			defer waitGroup.Done()
-
-			errorGetStoragePoolRef := storagePools[index].Ref()
+		storagePoolDetailUuidChannel := make(chan string)
+		storagePoolDetailNameChannel := make(chan string)
+		storagePoolDetailCapacityChannel := make(chan libvirtxml.StoragePoolSize)
+		storagePoolDetailAllocationChannel := make(chan libvirtxml.StoragePoolSize)
+		storagePoolDetailAvailableChannel := make(chan libvirtxml.StoragePoolSize)
+		go func(storagePoolObject libvirt.StoragePool) {
+			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
 				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 				return
 			}
-			defer storagePools[index].Free()
+			defer storagePoolObject.Free()
 
-			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePools[index], libvirt.StorageXMLFlags(storageXmlFlags))
+			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePoolObject, libvirt.StorageXMLFlags(storageXmlFlags))
 			if isError {
 				temboLog.ErrorLogging("failed get pool detail", errorGetStoragePoolDetail)
 				return
 			}
 
-			result[index].Uuid = storagePoolDetail.UUID
-			result[index].Name = storagePoolDetail.Name
-			result[index].Capacity = *storagePoolDetail.Capacity
-			result[index].Allocation = *storagePoolDetail.Allocation
-			result[index].Available = *storagePoolDetail.Available
-		}(i)
-		go func(index int) {
-			defer waitGroup.Done()
+			storagePoolDetailUuidChannel <- storagePoolDetail.UUID
+			storagePoolDetailNameChannel <- storagePoolDetail.Name
+			storagePoolDetailCapacityChannel <- *storagePoolDetail.Capacity
+			storagePoolDetailAllocationChannel <- *storagePoolDetail.Allocation
+			storagePoolDetailAvailableChannel <- *storagePoolDetail.Available
+		}(storagePools[i])
 
-			errorGetStoragePoolRef := storagePools[index].Ref()
+		storagePoolDetailStateChannel := make(chan libvirt.StoragePoolState)
+		go func(storagePoolObject libvirt.StoragePool) {
+			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
 				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 				return
 			}
-			defer storagePools[index].Free()
+			defer storagePoolObject.Free()
 
-			storagePoolInfo, errorGetStoragePoolInfo := storagePools[index].GetInfo()
+			storagePoolInfo, errorGetStoragePoolInfo := storagePoolObject.GetInfo()
 			if errorGetStoragePoolInfo != nil {
 				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolInfo)
 				return
 			}
 
-			result[index].State = storagePoolInfo.State
-		}(i)
-		go func(index int) {
-			defer waitGroup.Done()
+			storagePoolDetailStateChannel <- storagePoolInfo.State
+		}(storagePools[i])
 
-			errorGetStoragePoolRef := storagePools[index].Ref()
+		storagePoolDetailAutostartChannel := make(chan bool)
+		go func(storagePoolObject libvirt.StoragePool) {
+			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
 				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 				return
 			}
-			defer storagePools[index].Free()
+			defer storagePoolObject.Free()
 
-			storagePoolAutostart, errorGetStoragePoolAutostart := storagePools[index].GetAutostart()
+			storagePoolAutostart, errorGetStoragePoolAutostart := storagePoolObject.GetAutostart()
 			if errorGetStoragePoolAutostart != nil {
 				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolAutostart)
 				return
 			}
 
-			result[index].Autostart = storagePoolAutostart
-		}(i)
-		go func(index int) {
-			defer waitGroup.Done()
+			storagePoolDetailAutostartChannel <- storagePoolAutostart
+		}(storagePools[i])
 
-			errorGetStoragePoolRef := storagePools[index].Ref()
+		storagePoolDetailPersistentChannel := make(chan bool)
+		go func(storagePoolObject libvirt.StoragePool) {
+			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
 				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
 				return
 			}
-			defer storagePools[index].Free()
+			defer storagePoolObject.Free()
 
-			storagePoolPersistent, errorGetStoragePoolPersistent := storagePools[index].IsPersistent()
+			storagePoolPersistent, errorGetStoragePoolPersistent := storagePoolObject.IsPersistent()
 			if errorGetStoragePoolPersistent != nil {
 				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolPersistent)
 				return
 			}
 
-			result[index].Persistent = storagePoolPersistent
-		}(i)
+			storagePoolDetailPersistentChannel <- storagePoolPersistent
+		}(storagePools[i])
+
+		result[i].Uuid = <-storagePoolDetailUuidChannel
+		result[i].Name = <-storagePoolDetailNameChannel
+		result[i].Capacity = <-storagePoolDetailCapacityChannel
+		result[i].Allocation = <-storagePoolDetailAllocationChannel
+		result[i].Available = <-storagePoolDetailAvailableChannel
+		result[i].State = <-storagePoolDetailStateChannel
+		result[i].Autostart = <-storagePoolDetailAutostartChannel
+		result[i].Persistent = <-storagePoolDetailPersistentChannel
 	}
-	waitGroup.Wait()
 
 	return result, virestError, false
 }
