@@ -98,3 +98,109 @@ func TestPoolListDetailInactive(test *testing.T) {
 		}
 	})
 }
+
+func TestPoolListDetailErrorInactiveParameter(test *testing.T) {
+	var incomingRequest poolList.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		fmt.Sprintf("/storage-pool/info?Option=%d&Inactive=%d", 0, libvirt.CONNECT_LIST_STORAGE_POOLS_GLUSTER),
+		string(http.MethodGet),
+		[]byte{},
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition)
+	}
+
+	option, errorParseOptionToUint, isErrorParseOptionToUint := utils.StringToUint(incomingRequest.Option)
+	if isErrorParseOptionToUint {
+		test.Fatalf("parsing option failed: %s", errorParseOptionToUint)
+	}
+
+	inactive, errorParseInactiveToUint, isErrorParseInactiveToUint := utils.StringToUint(incomingRequest.Inactive)
+	if isErrorParseInactiveToUint {
+		test.Fatalf("parsing inactive failed: %s", errorParseInactiveToUint)
+	}
+
+	poolList, errorGetPoolList, isErrorGetPoolList := poolConnection.PoolList(option, inactive)
+	if isErrorGetPoolList {
+		test.Logf("get pool list test failed: %s", errorGetPoolList.Message)
+	}
+
+	var (
+		poolInfolMarshaled      []byte
+		errorMarshalingPoolInfo error
+	)
+	if !isErrorGetPoolList {
+		poolInfolMarshaled, errorMarshalingPoolInfo = json.MarshalIndent(poolList, "", "  ")
+	}
+	if errorMarshalingPoolInfo != nil {
+		test.Errorf("marshaling result error: %s", errorMarshalingPoolInfo.Error())
+	}
+	if errorMarshalingPoolInfo == nil && !isErrorGetPoolList {
+		test.Errorf("list storage pool: \n%s", string(poolInfolMarshaled))
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
+
+func TestPoolListDetailErrorOptionParameter(test *testing.T) {
+	var incomingRequest poolList.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		fmt.Sprintf("/storage-pool/info?Option=%d&Inactive=%d", 1048576, 0),
+		string(http.MethodGet),
+		[]byte{},
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition)
+	}
+
+	option, errorParseOptionToUint, isErrorParseOptionToUint := utils.StringToUint(incomingRequest.Option)
+	if isErrorParseOptionToUint {
+		test.Fatalf("parsing option failed: %s", errorParseOptionToUint)
+	}
+
+	inactive, errorParseInactiveToUint, isErrorParseInactiveToUint := utils.StringToUint(incomingRequest.Inactive)
+	if isErrorParseInactiveToUint {
+		test.Fatalf("parsing inactive failed: %s", errorParseInactiveToUint)
+	}
+
+	poolList, errorGetPoolList, isErrorGetPoolList := poolConnection.PoolList(option, inactive)
+	if isErrorGetPoolList {
+		test.Logf("get pool list test failed: %s", errorGetPoolList.Message)
+	}
+
+	var (
+		poolInfolMarshaled      []byte
+		errorMarshalingPoolInfo error
+	)
+	if !isErrorGetPoolList {
+		poolInfolMarshaled, errorMarshalingPoolInfo = json.MarshalIndent(poolList, "", "  ")
+	}
+	if errorMarshalingPoolInfo != nil {
+		test.Errorf("marshaling result error: %s", errorMarshalingPoolInfo.Error())
+	}
+	if errorMarshalingPoolInfo == nil && !isErrorGetPoolList {
+		test.Errorf("list storage pool: \n%s", string(poolInfolMarshaled))
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
