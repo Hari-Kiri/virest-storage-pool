@@ -3,7 +3,6 @@ package storagePool
 import (
 	"fmt"
 
-	"github.com/Hari-Kiri/temboLog"
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolList"
 	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
@@ -26,30 +25,57 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 		return nil, virestError, true
 	}
 
-	result := make([]poolList.Data, len(storagePools))
 	storagePoolDetailUuidChannel := make(chan string)
 	storagePoolDetailNameChannel := make(chan string)
 	storagePoolDetailCapacityChannel := make(chan libvirtxml.StoragePoolSize)
 	storagePoolDetailAllocationChannel := make(chan libvirtxml.StoragePoolSize)
 	storagePoolDetailAvailableChannel := make(chan libvirtxml.StoragePoolSize)
-	storagePoolDetailStateChannel := make(chan libvirt.StoragePoolState)
-	storagePoolDetailAutostartChannel := make(chan bool)
-	storagePoolDetailPersistentChannel := make(chan bool)
+	errorGetStoragePoolDetailChannel := make(chan virest.Error)
+	isErrorGetStoragePoolDetailChannel := make(chan bool)
+
+	storagePoolInfoStateChannel := make(chan libvirt.StoragePoolState)
+	errorGetStoragePoolInfoStateChannel := make(chan virest.Error)
+	isErrorGetStoragePoolInfoStateChannel := make(chan bool)
+
+	storagePoolAutostartChannel := make(chan bool)
+	errorGetstoragePoolAutostartChannel := make(chan virest.Error)
+	isErrorGetstoragePoolAutostartChannel := make(chan bool)
+
+	storagePoolPersistentChannel := make(chan bool)
+	errorGetstoragePoolPersistentChannel := make(chan virest.Error)
+	isErrorGetstoragePoolPersistentChannel := make(chan bool)
+
+	result := make([]poolList.Data, len(storagePools))
 	for i := 0; i < len(storagePools); i++ {
 		defer storagePools[i].Free()
 
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
-				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
+				storagePoolDetail := libvirtxml.StoragePool{}
+				isError := true
+
+				storagePoolDetailUuidChannel <- storagePoolDetail.UUID
+				storagePoolDetailNameChannel <- storagePoolDetail.Name
+				storagePoolDetailCapacityChannel <- *storagePoolDetail.Capacity
+				storagePoolDetailAllocationChannel <- *storagePoolDetail.Allocation
+				storagePoolDetailAvailableChannel <- *storagePoolDetail.Available
+				errorGetStoragePoolDetailChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
+				isErrorGetStoragePoolDetailChannel <- isError
+
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePoolObject, libvirt.StorageXMLFlags(storageXmlFlags))
 			if isError {
-				temboLog.ErrorLogging("failed get pool detail", errorGetStoragePoolDetail)
-				return
+				storagePoolDetailUuidChannel <- storagePoolDetail.UUID
+				storagePoolDetailNameChannel <- storagePoolDetail.Name
+				storagePoolDetailCapacityChannel <- libvirtxml.StoragePoolSize{}
+				storagePoolDetailAllocationChannel <- libvirtxml.StoragePoolSize{}
+				storagePoolDetailAvailableChannel <- libvirtxml.StoragePoolSize{}
+				errorGetStoragePoolDetailChannel <- virest.Error{Error: errorGetStoragePoolDetail}
+				isErrorGetStoragePoolDetailChannel <- isError
 			}
 
 			storagePoolDetailUuidChannel <- storagePoolDetail.UUID
@@ -57,68 +83,148 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 			storagePoolDetailCapacityChannel <- *storagePoolDetail.Capacity
 			storagePoolDetailAllocationChannel <- *storagePoolDetail.Allocation
 			storagePoolDetailAvailableChannel <- *storagePoolDetail.Available
+			errorGetStoragePoolDetailChannel <- virest.Error{}
+			isErrorGetStoragePoolDetailChannel <- isError
 		}(storagePools[i])
 
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
-				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
+				storagePoolInfo := &libvirt.StoragePoolInfo{}
+				isError := true
+
+				storagePoolInfoStateChannel <- storagePoolInfo.State
+				errorGetStoragePoolInfoStateChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
+				isErrorGetStoragePoolInfoStateChannel <- isError
+
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolInfo, errorGetStoragePoolInfo := storagePoolObject.GetInfo()
 			if errorGetStoragePoolInfo != nil {
-				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolInfo)
+				isError := true
+
+				storagePoolInfoStateChannel <- storagePoolInfo.State
+				errorGetStoragePoolInfoStateChannel <- virest.Error{Error: errorGetStoragePoolInfo.(libvirt.Error)}
+				isErrorGetStoragePoolInfoStateChannel <- isError
+
 				return
 			}
 
-			storagePoolDetailStateChannel <- storagePoolInfo.State
+			storagePoolInfoStateChannel <- storagePoolInfo.State
+			errorGetStoragePoolInfoStateChannel <- virest.Error{}
+			isErrorGetStoragePoolInfoStateChannel <- isError
 		}(storagePools[i])
 
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
-				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
+				storagePoolAutostart := false
+				isError := true
+
+				storagePoolAutostartChannel <- storagePoolAutostart
+				errorGetstoragePoolAutostartChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
+				isErrorGetstoragePoolAutostartChannel <- isError
+
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolAutostart, errorGetStoragePoolAutostart := storagePoolObject.GetAutostart()
 			if errorGetStoragePoolAutostart != nil {
-				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolAutostart)
+				isError := true
+
+				storagePoolAutostartChannel <- storagePoolAutostart
+				errorGetstoragePoolAutostartChannel <- virest.Error{Error: errorGetStoragePoolAutostart.(libvirt.Error)}
+				isErrorGetstoragePoolAutostartChannel <- isError
+
 				return
 			}
 
-			storagePoolDetailAutostartChannel <- storagePoolAutostart
+			storagePoolAutostartChannel <- storagePoolAutostart
+			errorGetstoragePoolAutostartChannel <- virest.Error{}
+			isErrorGetstoragePoolAutostartChannel <- isError
 		}(storagePools[i])
 
 		go func(storagePoolObject libvirt.StoragePool) {
 			errorGetStoragePoolRef := storagePoolObject.Ref()
 			if errorGetStoragePoolRef != nil {
-				temboLog.ErrorLogging("error increase the reference count on the storage pool:", errorGetStoragePoolRef)
+				storagePoolPersistent := false
+				isError := true
+
+				storagePoolPersistentChannel <- storagePoolPersistent
+				errorGetstoragePoolPersistentChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
+				isErrorGetstoragePoolPersistentChannel <- isError
+
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolPersistent, errorGetStoragePoolPersistent := storagePoolObject.IsPersistent()
 			if errorGetStoragePoolPersistent != nil {
-				temboLog.ErrorLogging("failed get XML of pool", errorGetStoragePoolPersistent)
+				isError := true
+
+				storagePoolPersistentChannel <- storagePoolPersistent
+				errorGetstoragePoolPersistentChannel <- virest.Error{Error: errorGetStoragePoolPersistent.(libvirt.Error)}
+				isErrorGetstoragePoolPersistentChannel <- isError
+
 				return
 			}
 
-			storagePoolDetailPersistentChannel <- storagePoolPersistent
+			storagePoolPersistentChannel <- storagePoolPersistent
+			errorGetstoragePoolPersistentChannel <- virest.Error{}
+			isErrorGetstoragePoolPersistentChannel <- isError
 		}(storagePools[i])
 
-		result[i].Uuid = <-storagePoolDetailUuidChannel
-		result[i].Name = <-storagePoolDetailNameChannel
-		result[i].Capacity = <-storagePoolDetailCapacityChannel
-		result[i].Allocation = <-storagePoolDetailAllocationChannel
-		result[i].Available = <-storagePoolDetailAvailableChannel
-		result[i].State = <-storagePoolDetailStateChannel
-		result[i].Autostart = <-storagePoolDetailAutostartChannel
-		result[i].Persistent = <-storagePoolDetailPersistentChannel
+		storagePoolUuid := <-storagePoolDetailUuidChannel
+		storagePoolName := <-storagePoolDetailNameChannel
+		storagePoolCapacity := <-storagePoolDetailCapacityChannel
+		storagePoolAllocation := <-storagePoolDetailAllocationChannel
+		storagePoolAvailable := <-storagePoolDetailAvailableChannel
+		errorGetStoragePoolDetail := <-errorGetStoragePoolDetailChannel
+		isErrorGetStoragePoolDetail := <-isErrorGetStoragePoolDetailChannel
+		if isErrorGetStoragePoolDetail {
+			virestError = errorGetStoragePoolDetail
+			isError = isErrorGetStoragePoolDetail
+			break
+		}
+		result[i].Uuid = storagePoolUuid
+		result[i].Name = storagePoolName
+		result[i].Capacity = storagePoolCapacity
+		result[i].Allocation = storagePoolAllocation
+		result[i].Available = storagePoolAvailable
+
+		storagePoolInfoState := <-storagePoolInfoStateChannel
+		errorGetStoragePoolInfoState := <-errorGetStoragePoolInfoStateChannel
+		isErrorGetStoragePoolInfoState := <-isErrorGetStoragePoolInfoStateChannel
+		if isErrorGetStoragePoolInfoState {
+			virestError = errorGetStoragePoolInfoState
+			isError = isErrorGetStoragePoolInfoState
+			break
+		}
+		result[i].State = storagePoolInfoState
+
+		storagePoolAutostart := <-storagePoolAutostartChannel
+		errorGetStoragePoolAutostart := <-errorGetstoragePoolAutostartChannel
+		isErrorGetStoragePoolAutostart := <-isErrorGetstoragePoolAutostartChannel
+		if isErrorGetStoragePoolAutostart {
+			virestError = errorGetStoragePoolAutostart
+			isError = isErrorGetStoragePoolAutostart
+			break
+		}
+		result[i].Autostart = storagePoolAutostart
+
+		storagePoolPersistent := <-storagePoolPersistentChannel
+		errorGetStoragePoolPersistent := <-errorGetstoragePoolPersistentChannel
+		isErrorGetStoragePoolPersistent := <-isErrorGetstoragePoolPersistentChannel
+		if isErrorGetStoragePoolPersistent {
+			virestError = errorGetStoragePoolPersistent
+			isError = isErrorGetStoragePoolPersistent
+			break
+		}
+		result[i].Persistent = storagePoolPersistent
 	}
 
-	return result, virestError, false
+	return result, virestError, isError
 }
