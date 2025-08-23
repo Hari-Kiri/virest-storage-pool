@@ -188,6 +188,9 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 		for i := 0; i < cap(virestErrorChannel); i++ {
 			virestError = <-virestErrorChannel
 			isError = <-isErrorChannel
+			if isError {
+				break
+			}
 		}
 		if isError {
 			break
