@@ -23,8 +23,14 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 	}
 
 	storagePoolNameChannel := make(chan string)
-	errorGetStoragePoolNameChannel := make(chan virest.Error)
-	isErrorGetStoragePoolNameChannel := make(chan bool)
+	storagePoolStateChannel := make(chan libvirt.StoragePoolState)
+	storagePoolCapacityChannel := make(chan uint64)
+	storagePoolAllocationChannel := make(chan uint64)
+	storagePoolAvailableChannel := make(chan uint64)
+	storagePoolAutostartChannel := make(chan bool)
+	storagePoolPersistentChannel := make(chan bool)
+	virestErrorChannel := make(chan virest.Error, 3)
+	isErrorChannel := make(chan bool, 3)
 	go func() {
 		var (
 			virestError virest.Error
@@ -37,8 +43,8 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			storagePoolName := ""
 
 			storagePoolNameChannel <- storagePoolName
-			errorGetStoragePoolNameChannel <- virestError
-			isErrorGetStoragePoolNameChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
@@ -48,23 +54,17 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 		virestError.Error, isError = errorGetStoragePoolName.(libvirt.Error)
 		if isError {
 			storagePoolNameChannel <- storagePoolName
-			errorGetStoragePoolNameChannel <- virestError
-			isErrorGetStoragePoolNameChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
 
 		storagePoolNameChannel <- storagePoolName
-		errorGetStoragePoolNameChannel <- virest.Error{}
-		isErrorGetStoragePoolNameChannel <- false
+		virestErrorChannel <- virest.Error{}
+		isErrorChannel <- false
 	}()
 
-	storagePoolStateChannel := make(chan libvirt.StoragePoolState)
-	storagePoolCapacityChannel := make(chan uint64)
-	storagePoolAllocationChannel := make(chan uint64)
-	storagePoolAvailableChannel := make(chan uint64)
-	errorGetStoragePoolInfoChannel := make(chan virest.Error)
-	isErrorGetStoragePoolInfoChannel := make(chan bool)
 	go func() {
 		var (
 			virestError virest.Error
@@ -80,8 +80,8 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			storagePoolCapacityChannel <- storagePoolInfo.Capacity
 			storagePoolAllocationChannel <- storagePoolInfo.Allocation
 			storagePoolAvailableChannel <- storagePoolInfo.Available
-			errorGetStoragePoolInfoChannel <- virestError
-			isErrorGetStoragePoolInfoChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
@@ -94,8 +94,8 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			storagePoolCapacityChannel <- storagePoolInfo.Capacity
 			storagePoolAllocationChannel <- storagePoolInfo.Allocation
 			storagePoolAvailableChannel <- storagePoolInfo.Available
-			errorGetStoragePoolInfoChannel <- virestError
-			isErrorGetStoragePoolInfoChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
@@ -104,13 +104,10 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 		storagePoolCapacityChannel <- storagePoolInfo.Capacity
 		storagePoolAllocationChannel <- storagePoolInfo.Allocation
 		storagePoolAvailableChannel <- storagePoolInfo.Available
-		errorGetStoragePoolInfoChannel <- virest.Error{}
-		isErrorGetStoragePoolInfoChannel <- false
+		virestErrorChannel <- virest.Error{}
+		isErrorChannel <- false
 	}()
 
-	storagePoolAutostartChannel := make(chan bool)
-	errorGetStoragePoolAutostartChannel := make(chan virest.Error)
-	isErrorGetStoragePoolAutostartChannel := make(chan bool)
 	go func() {
 		var (
 			virestError virest.Error
@@ -123,8 +120,8 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			storagePoolAutostart := false
 
 			storagePoolAutostartChannel <- storagePoolAutostart
-			errorGetStoragePoolAutostartChannel <- virestError
-			isErrorGetStoragePoolAutostartChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
@@ -134,20 +131,17 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 		virestError.Error, isError = errorGetStoragePoolAutostart.(libvirt.Error)
 		if isError {
 			storagePoolAutostartChannel <- storagePoolAutostart
-			errorGetStoragePoolAutostartChannel <- virestError
-			isErrorGetStoragePoolAutostartChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
 
 		storagePoolAutostartChannel <- storagePoolAutostart
-		errorGetStoragePoolAutostartChannel <- virest.Error{}
-		isErrorGetStoragePoolAutostartChannel <- false
+		virestErrorChannel <- virest.Error{}
+		isErrorChannel <- false
 	}()
 
-	storagePoolPersistentChannel := make(chan bool)
-	errorStoragePoolPersistentChannel := make(chan virest.Error)
-	isErrorStoragePoolPersistentChannel := make(chan bool)
 	go func() {
 		var (
 			virestError virest.Error
@@ -160,8 +154,8 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 			storagePoolPersistent := false
 
 			storagePoolPersistentChannel <- storagePoolPersistent
-			errorStoragePoolPersistentChannel <- virestError
-			isErrorStoragePoolPersistentChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
@@ -171,50 +165,30 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 		virestError.Error, isError = errorGetStoragePoolPersistent.(libvirt.Error)
 		if isError {
 			storagePoolPersistentChannel <- storagePoolPersistent
-			errorStoragePoolPersistentChannel <- virestError
-			isErrorStoragePoolPersistentChannel <- isError
+			virestErrorChannel <- virestError
+			isErrorChannel <- isError
 
 			return
 		}
 
 		storagePoolPersistentChannel <- storagePoolPersistent
-		errorStoragePoolPersistentChannel <- virest.Error{}
-		isErrorStoragePoolPersistentChannel <- false
+		virestErrorChannel <- virest.Error{}
+		isErrorChannel <- false
 	}()
 
 	storagePoolName := <-storagePoolNameChannel
-	errorGetStoragePoolName := <-errorGetStoragePoolNameChannel
-	isErrorGetStoragePoolName := <-isErrorGetStoragePoolNameChannel
-
 	storagePoolState := <-storagePoolStateChannel
 	storagePoolCapacity := <-storagePoolCapacityChannel
 	storagePoolAllocation := <-storagePoolAllocationChannel
 	storagePoolAvailable := <-storagePoolAvailableChannel
-	errorGetStoragePoolInfo := <-errorGetStoragePoolInfoChannel
-	isErrorGetStoragePoolInfo := <-isErrorGetStoragePoolInfoChannel
-
 	storagePoolAutostart := <-storagePoolAutostartChannel
-	errorGetStoragePoolAutostart := <-errorGetStoragePoolAutostartChannel
-	isErrorGetStoragePoolAutostart := <-isErrorGetStoragePoolAutostartChannel
-
 	storagePoolPersistent := <-storagePoolPersistentChannel
-	errorStoragePoolPersistent := <-errorStoragePoolPersistentChannel
-	isErrorStoragePoolPersistent := <-isErrorStoragePoolPersistentChannel
-
-	if isErrorGetStoragePoolName {
-		return poolInfo.Info{}, errorGetStoragePoolName, isErrorGetStoragePoolName
+	for i := 0; i < cap(virestErrorChannel); i++ {
+		virestError = <-virestErrorChannel
+		isError = <-isErrorChannel
 	}
-
-	if isErrorGetStoragePoolInfo {
-		return poolInfo.Info{}, errorGetStoragePoolInfo, isErrorGetStoragePoolInfo
-	}
-
-	if isErrorGetStoragePoolAutostart {
-		return poolInfo.Info{}, errorGetStoragePoolAutostart, isErrorGetStoragePoolAutostart
-	}
-
-	if isErrorStoragePoolPersistent {
-		return poolInfo.Info{}, errorStoragePoolPersistent, isErrorStoragePoolPersistent
+	if isError {
+		return poolInfo.Info{}, virestError, isError
 	}
 
 	return poolInfo.Info{
