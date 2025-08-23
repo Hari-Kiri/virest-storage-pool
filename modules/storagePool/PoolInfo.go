@@ -186,6 +186,9 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 	for i := 0; i < cap(virestErrorChannel); i++ {
 		virestError = <-virestErrorChannel
 		isError = <-isErrorChannel
+		if isError {
+			break
+		}
 	}
 	if isError {
 		return poolInfo.Info{}, virestError, isError
