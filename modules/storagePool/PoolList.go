@@ -22,7 +22,7 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 	virestError.Error, isError = errorGetListOfStoragePool.(libvirt.Error)
 	if isError {
 		virestError.Message = fmt.Sprintf("failed list storage pool: %s", virestError.Message)
-		return nil, virestError, true
+		return nil, virestError, isError
 	}
 
 	storagePoolDetailUuidChannel := make(chan string)
@@ -30,52 +30,46 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 	storagePoolDetailCapacityChannel := make(chan libvirtxml.StoragePoolSize)
 	storagePoolDetailAllocationChannel := make(chan libvirtxml.StoragePoolSize)
 	storagePoolDetailAvailableChannel := make(chan libvirtxml.StoragePoolSize)
-	errorGetStoragePoolDetailChannel := make(chan virest.Error)
-	isErrorGetStoragePoolDetailChannel := make(chan bool)
-
 	storagePoolInfoStateChannel := make(chan libvirt.StoragePoolState)
-	errorGetStoragePoolInfoStateChannel := make(chan virest.Error)
-	isErrorGetStoragePoolInfoStateChannel := make(chan bool)
-
 	storagePoolAutostartChannel := make(chan bool)
-	errorGetstoragePoolAutostartChannel := make(chan virest.Error)
-	isErrorGetstoragePoolAutostartChannel := make(chan bool)
-
 	storagePoolPersistentChannel := make(chan bool)
-	errorGetstoragePoolPersistentChannel := make(chan virest.Error)
-	isErrorGetstoragePoolPersistentChannel := make(chan bool)
-
+	virestErrorChannel := make(chan virest.Error, 3)
+	isErrorChannel := make(chan bool, 3)
 	result := make([]poolList.Data, len(storagePools))
 	for i := 0; i < len(storagePools); i++ {
 		defer storagePools[i].Free()
 
 		go func(storagePoolObject libvirt.StoragePool) {
+			var (
+				storagePoolDetail libvirtxml.StoragePool
+				virestError       virest.Error
+				isError           bool
+			)
+
 			errorGetStoragePoolRef := storagePoolObject.Ref()
-			if errorGetStoragePoolRef != nil {
-				storagePoolDetail := libvirtxml.StoragePool{}
-				isError := true
-
-				storagePoolDetailUuidChannel <- storagePoolDetail.UUID
-				storagePoolDetailNameChannel <- storagePoolDetail.Name
-				storagePoolDetailCapacityChannel <- *storagePoolDetail.Capacity
-				storagePoolDetailAllocationChannel <- *storagePoolDetail.Allocation
-				storagePoolDetailAvailableChannel <- *storagePoolDetail.Available
-				errorGetStoragePoolDetailChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
-				isErrorGetStoragePoolDetailChannel <- isError
-
-				return
-			}
-			defer storagePoolObject.Free()
-
-			storagePoolDetail, errorGetStoragePoolDetail, isError := getPoolDetail(storagePoolObject, libvirt.StorageXMLFlags(storageXmlFlags))
+			virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
 			if isError {
 				storagePoolDetailUuidChannel <- storagePoolDetail.UUID
 				storagePoolDetailNameChannel <- storagePoolDetail.Name
 				storagePoolDetailCapacityChannel <- libvirtxml.StoragePoolSize{}
 				storagePoolDetailAllocationChannel <- libvirtxml.StoragePoolSize{}
 				storagePoolDetailAvailableChannel <- libvirtxml.StoragePoolSize{}
-				errorGetStoragePoolDetailChannel <- virest.Error{Error: errorGetStoragePoolDetail}
-				isErrorGetStoragePoolDetailChannel <- isError
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
+
+				return
+			}
+			defer storagePoolObject.Free()
+
+			storagePoolDetail, virestError.Error, isError = getPoolDetail(storagePoolObject, libvirt.StorageXMLFlags(storageXmlFlags))
+			if isError {
+				storagePoolDetailUuidChannel <- storagePoolDetail.UUID
+				storagePoolDetailNameChannel <- storagePoolDetail.Name
+				storagePoolDetailCapacityChannel <- libvirtxml.StoragePoolSize{}
+				storagePoolDetailAllocationChannel <- libvirtxml.StoragePoolSize{}
+				storagePoolDetailAvailableChannel <- libvirtxml.StoragePoolSize{}
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 			}
 
 			storagePoolDetailUuidChannel <- storagePoolDetail.UUID
@@ -83,98 +77,104 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 			storagePoolDetailCapacityChannel <- *storagePoolDetail.Capacity
 			storagePoolDetailAllocationChannel <- *storagePoolDetail.Allocation
 			storagePoolDetailAvailableChannel <- *storagePoolDetail.Available
-			errorGetStoragePoolDetailChannel <- virest.Error{}
-			isErrorGetStoragePoolDetailChannel <- isError
+			virestErrorChannel <- virest.Error{}
+			isErrorChannel <- false
 		}(storagePools[i])
 
 		go func(storagePoolObject libvirt.StoragePool) {
-			errorGetStoragePoolRef := storagePoolObject.Ref()
-			if errorGetStoragePoolRef != nil {
-				storagePoolInfo := &libvirt.StoragePoolInfo{}
-				isError := true
+			var (
+				virestError virest.Error
+				isError     bool
+			)
 
-				storagePoolInfoStateChannel <- storagePoolInfo.State
-				errorGetStoragePoolInfoStateChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
-				isErrorGetStoragePoolInfoStateChannel <- isError
+			errorGetStoragePoolRef := storagePoolObject.Ref()
+			virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
+			if isError {
+				storagePoolInfoStateChannel <- libvirt.StoragePoolInfo{}.State
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolInfo, errorGetStoragePoolInfo := storagePoolObject.GetInfo()
-			if errorGetStoragePoolInfo != nil {
-				isError := true
-
+			virestError.Error, isError = errorGetStoragePoolInfo.(libvirt.Error)
+			if isError {
 				storagePoolInfoStateChannel <- storagePoolInfo.State
-				errorGetStoragePoolInfoStateChannel <- virest.Error{Error: errorGetStoragePoolInfo.(libvirt.Error)}
-				isErrorGetStoragePoolInfoStateChannel <- isError
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 
 				return
 			}
 
 			storagePoolInfoStateChannel <- storagePoolInfo.State
-			errorGetStoragePoolInfoStateChannel <- virest.Error{}
-			isErrorGetStoragePoolInfoStateChannel <- isError
+			virestErrorChannel <- virest.Error{}
+			isErrorChannel <- false
 		}(storagePools[i])
 
 		go func(storagePoolObject libvirt.StoragePool) {
-			errorGetStoragePoolRef := storagePoolObject.Ref()
-			if errorGetStoragePoolRef != nil {
-				storagePoolAutostart := false
-				isError := true
+			var (
+				virestError virest.Error
+				isError     bool
+			)
 
-				storagePoolAutostartChannel <- storagePoolAutostart
-				errorGetstoragePoolAutostartChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
-				isErrorGetstoragePoolAutostartChannel <- isError
+			errorGetStoragePoolRef := storagePoolObject.Ref()
+			virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
+			if isError {
+				storagePoolAutostartChannel <- false
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolAutostart, errorGetStoragePoolAutostart := storagePoolObject.GetAutostart()
-			if errorGetStoragePoolAutostart != nil {
-				isError := true
-
+			virestError.Error, isError = errorGetStoragePoolAutostart.(libvirt.Error)
+			if isError {
 				storagePoolAutostartChannel <- storagePoolAutostart
-				errorGetstoragePoolAutostartChannel <- virest.Error{Error: errorGetStoragePoolAutostart.(libvirt.Error)}
-				isErrorGetstoragePoolAutostartChannel <- isError
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 
 				return
 			}
 
 			storagePoolAutostartChannel <- storagePoolAutostart
-			errorGetstoragePoolAutostartChannel <- virest.Error{}
-			isErrorGetstoragePoolAutostartChannel <- isError
+			virestErrorChannel <- virest.Error{}
+			isErrorChannel <- false
 		}(storagePools[i])
 
 		go func(storagePoolObject libvirt.StoragePool) {
-			errorGetStoragePoolRef := storagePoolObject.Ref()
-			if errorGetStoragePoolRef != nil {
-				storagePoolPersistent := false
-				isError := true
+			var (
+				virestError virest.Error
+				isError     bool
+			)
 
-				storagePoolPersistentChannel <- storagePoolPersistent
-				errorGetstoragePoolPersistentChannel <- virest.Error{Error: errorGetStoragePoolRef.(libvirt.Error)}
-				isErrorGetstoragePoolPersistentChannel <- isError
+			errorGetStoragePoolRef := storagePoolObject.Ref()
+			virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
+			if isError {
+				storagePoolPersistentChannel <- false
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 
 				return
 			}
 			defer storagePoolObject.Free()
 
 			storagePoolPersistent, errorGetStoragePoolPersistent := storagePoolObject.IsPersistent()
-			if errorGetStoragePoolPersistent != nil {
-				isError := true
-
+			virestError.Error, isError = errorGetStoragePoolPersistent.(libvirt.Error)
+			if isError {
 				storagePoolPersistentChannel <- storagePoolPersistent
-				errorGetstoragePoolPersistentChannel <- virest.Error{Error: errorGetStoragePoolPersistent.(libvirt.Error)}
-				isErrorGetstoragePoolPersistentChannel <- isError
+				virestErrorChannel <- virestError
+				isErrorChannel <- isError
 
 				return
 			}
 
 			storagePoolPersistentChannel <- storagePoolPersistent
-			errorGetstoragePoolPersistentChannel <- virest.Error{}
-			isErrorGetstoragePoolPersistentChannel <- isError
+			virestErrorChannel <- virest.Error{}
+			isErrorChannel <- false
 		}(storagePools[i])
 
 		storagePoolUuid := <-storagePoolDetailUuidChannel
@@ -182,47 +182,27 @@ func (poolConnection *poolConnection) PoolList(option uint, storageXmlFlags uint
 		storagePoolCapacity := <-storagePoolDetailCapacityChannel
 		storagePoolAllocation := <-storagePoolDetailAllocationChannel
 		storagePoolAvailable := <-storagePoolDetailAvailableChannel
-		errorGetStoragePoolDetail := <-errorGetStoragePoolDetailChannel
-		isErrorGetStoragePoolDetail := <-isErrorGetStoragePoolDetailChannel
-		if isErrorGetStoragePoolDetail {
-			virestError = errorGetStoragePoolDetail
-			isError = isErrorGetStoragePoolDetail
+		storagePoolInfoState := <-storagePoolInfoStateChannel
+		storagePoolAutostart := <-storagePoolAutostartChannel
+		storagePoolPersistent := <-storagePoolPersistentChannel
+		for i := 0; i < cap(virestErrorChannel); i++ {
+			virestError = <-virestErrorChannel
+			isError = <-isErrorChannel
+			if isError {
+				break
+			}
+		}
+		if isError {
 			break
 		}
+
 		result[i].Uuid = storagePoolUuid
 		result[i].Name = storagePoolName
 		result[i].Capacity = storagePoolCapacity
 		result[i].Allocation = storagePoolAllocation
 		result[i].Available = storagePoolAvailable
-
-		storagePoolInfoState := <-storagePoolInfoStateChannel
-		errorGetStoragePoolInfoState := <-errorGetStoragePoolInfoStateChannel
-		isErrorGetStoragePoolInfoState := <-isErrorGetStoragePoolInfoStateChannel
-		if isErrorGetStoragePoolInfoState {
-			virestError = errorGetStoragePoolInfoState
-			isError = isErrorGetStoragePoolInfoState
-			break
-		}
 		result[i].State = storagePoolInfoState
-
-		storagePoolAutostart := <-storagePoolAutostartChannel
-		errorGetStoragePoolAutostart := <-errorGetstoragePoolAutostartChannel
-		isErrorGetStoragePoolAutostart := <-isErrorGetstoragePoolAutostartChannel
-		if isErrorGetStoragePoolAutostart {
-			virestError = errorGetStoragePoolAutostart
-			isError = isErrorGetStoragePoolAutostart
-			break
-		}
 		result[i].Autostart = storagePoolAutostart
-
-		storagePoolPersistent := <-storagePoolPersistentChannel
-		errorGetStoragePoolPersistent := <-errorGetstoragePoolPersistentChannel
-		isErrorGetStoragePoolPersistent := <-isErrorGetstoragePoolPersistentChannel
-		if isErrorGetStoragePoolPersistent {
-			virestError = errorGetStoragePoolPersistent
-			isError = isErrorGetStoragePoolPersistent
-			break
-		}
 		result[i].Persistent = storagePoolPersistent
 	}
 
