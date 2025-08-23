@@ -129,19 +129,8 @@ func TestPoolListDetailErrorInactiveParameter(test *testing.T) {
 	if isErrorGetPoolList {
 		test.Logf("get pool list test failed: %s", errorGetPoolList.Message)
 	}
-
-	var (
-		poolInfolMarshaled      []byte
-		errorMarshalingPoolInfo error
-	)
 	if !isErrorGetPoolList {
-		poolInfolMarshaled, errorMarshalingPoolInfo = json.MarshalIndent(poolList, "", "  ")
-	}
-	if errorMarshalingPoolInfo != nil {
-		test.Errorf("marshaling result error: %s", errorMarshalingPoolInfo.Error())
-	}
-	if errorMarshalingPoolInfo == nil && !isErrorGetPoolList {
-		test.Errorf("list storage pool: \n%s", string(poolInfolMarshaled))
+		test.Errorf("this test must be failed, but it won't: %v", poolList)
 	}
 
 	test.Cleanup(func() {
