@@ -26,6 +26,11 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 	errorGetStoragePoolNameChannel := make(chan virest.Error)
 	isErrorGetStoragePoolNameChannel := make(chan bool)
 	go func() {
+		var (
+			virestError virest.Error
+			isError     bool
+		)
+
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
 		if isError {
@@ -61,6 +66,11 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 	errorGetStoragePoolInfoChannel := make(chan virest.Error)
 	isErrorGetStoragePoolInfoChannel := make(chan bool)
 	go func() {
+		var (
+			virestError virest.Error
+			isError     bool
+		)
+
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
 		if isError {
@@ -102,6 +112,11 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 	errorGetStoragePoolAutostartChannel := make(chan virest.Error)
 	isErrorGetStoragePoolAutostartChannel := make(chan bool)
 	go func() {
+		var (
+			virestError virest.Error
+			isError     bool
+		)
+
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
 		if isError {
@@ -134,6 +149,11 @@ func (poolConnection *poolConnection) PoolInfo(uuid string) (poolInfo.Info, vire
 	errorStoragePoolPersistentChannel := make(chan virest.Error)
 	isErrorStoragePoolPersistentChannel := make(chan bool)
 	go func() {
+		var (
+			virestError virest.Error
+			isError     bool
+		)
+
 		errorGetStoragePoolRef := storagePoolObject.Ref()
 		virestError.Error, isError = errorGetStoragePoolRef.(libvirt.Error)
 		if isError {
