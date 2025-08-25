@@ -7,8 +7,38 @@ import (
 	"testing"
 
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolInfo"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
+
+func (helper helperTest) helperTestPoolInfo(poolUuid string) (poolInfo.Info, virest.Error, bool) {
+	helper.test.Helper()
+
+	var incomingRequest poolInfo.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		helper.test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		fmt.Sprintf("/storage-pool/info?Uuid=%s", poolUuid),
+		string(http.MethodGet),
+		[]byte{},
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		helper.test.Fail()
+		return poolInfo.Info{}, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition
+	}
+	defer poolConnection.Close()
+
+	result, errorGetPoolInfo, isErrorGetPoolInfo := poolConnection.PoolInfo(incomingRequest.Uuid)
+	if isErrorGetPoolInfo {
+		helper.test.Fail()
+		return poolInfo.Info{}, errorGetPoolInfo, isErrorGetPoolInfo
+	}
+
+	return result, virest.Error{}, false
+}
 
 func TestPoolInfo(test *testing.T) {
 	helper := helperTest{
