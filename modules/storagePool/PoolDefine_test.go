@@ -165,7 +165,6 @@ func TestPoolDefineNoOption(test *testing.T) {
 	}
 
 	requestData := poolDefine.Request{
-		Option:      0,
 		StoragePool: storagePoolDirectory,
 	}
 	var (
