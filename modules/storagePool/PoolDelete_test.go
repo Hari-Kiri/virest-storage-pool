@@ -136,10 +136,17 @@ func TestPoolDeleteClearAllToZeros(test *testing.T) {
 
 	errorPoolDelete, isErrorPoolDelete := poolConnection.PoolDelete(incomingRequest.Uuid, incomingRequest.Option)
 	if isErrorPoolDelete {
-		test.Errorf("deleting pool and clear all data test failed: %s", errorPoolDelete.Message)
+		test.Logf("deleting pool and clear all data test failed: %s", errorPoolDelete.Message)
+	}
+	if !isErrorPoolDelete {
+		test.Error("this test must be failed, but it won't")
 	}
 
 	test.Cleanup(func() {
+		if errorPoolDelete, isErrorPoolDelete = helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
+			test.Errorf("deleting pool test failed: %s", errorPoolDelete.Message)
+		}
+
 		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
