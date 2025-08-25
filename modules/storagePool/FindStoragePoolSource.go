@@ -14,7 +14,8 @@ import (
 // (optional for some storage pool types, e.g. local ones) is an instance of the storage pool's source element
 // specifying where to look for the pools.
 //
-// srcSpec is not required for some types (e.g., those querying local storage resources only)
+// srcSpec is not required for some types (e.g., those querying local storage resources only).
+// The valid pool types include: dir, fs, netfs, logical, disk, iscsi, scsi, mpath, rbd, sheepdog, and gluster.
 func (poolConnection *poolConnection) FindStoragePoolSource(pooltype string, srcSpec libvirtxml.Source) (findStoragePoolSources.Sources, virest.Error, bool) {
 	var (
 		srcSpecXml  string
