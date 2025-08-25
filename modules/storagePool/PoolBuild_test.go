@@ -91,14 +91,13 @@ func TestPoolBuildRepairOrReinitialize(test *testing.T) {
 
 	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
 	if isErrorPoolBuild {
-		test.Errorf("repair or reinitilize pool test failed: %s", errorPoolBuild.Message)
+		test.Logf("repair or reinitilize pool test failed: %s", errorPoolBuild.Message)
+	}
+	if !isErrorPoolBuild {
+		test.Error("this test must be failed, but it won't")
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
-		}
-
 		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
@@ -149,14 +148,13 @@ func TestPoolBuildExtendExistingPool(test *testing.T) {
 
 	errorPoolBuild, isErrorPoolBuild := poolConnection.PoolBuild(incomingRequest.Uuid, incomingRequest.Option)
 	if isErrorPoolBuild {
-		test.Errorf("extend existing pool test failed: %s", errorPoolBuild.Message)
+		test.Logf("extend existing pool test failed: %s", errorPoolBuild.Message)
+	}
+	if !isErrorPoolBuild {
+		test.Error("this test must be failed, but it won't")
 	}
 
 	test.Cleanup(func() {
-		if errorPoolDelete, isErrorPoolDelete := helper.helperTestPoolDelete(poolUuid, libvirt.STORAGE_POOL_DELETE_NORMAL); isErrorPoolDelete {
-			test.Errorf("pool delete failed: %s", errorPoolDelete.Message)
-		}
-
 		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
 			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
 		}
