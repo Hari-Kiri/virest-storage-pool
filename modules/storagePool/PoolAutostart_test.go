@@ -6,8 +6,36 @@ import (
 	"testing"
 
 	"github.com/Hari-Kiri/virest-storage-pool/structures/poolAutostart"
+	"github.com/Hari-Kiri/virest-utilities/utils/structures/virest"
 	"libvirt.org/go/libvirt"
 )
+
+func (helper helperTest) helperTestPoolAutostart(poolUuid string, autostart bool) (virest.Error, bool) {
+	var incomingRequest poolAutostart.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		helper.test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/define",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"autostart\":%t}", poolUuid, autostart),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		helper.test.Fail()
+		return errorHttpRequestPrecondition, isErrorHttpRequestPrecondition
+	}
+	defer poolConnection.Close()
+
+	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
+	if isErrorPoolAutostart {
+		helper.test.Fail()
+		return errorPoolAutostart, isErrorPoolAutostart
+	}
+
+	return virest.Error{}, false
+}
 
 func TestPoolAutostartTrue(test *testing.T) {
 	helper := helperTest{
@@ -61,6 +89,11 @@ func TestPoolAutostartTrueTwice(test *testing.T) {
 		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
+	errorPoolAutostart, isErrorPoolAutostart := helper.helperTestPoolAutostart(poolUuid, true)
+	if isErrorPoolAutostart {
+		test.Errorf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
+	}
+
 	var incomingRequest poolAutostart.Request
 	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
 		test,
@@ -74,11 +107,6 @@ func TestPoolAutostartTrueTwice(test *testing.T) {
 	)
 	if isErrorHttpRequestPrecondition {
 		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
-	}
-
-	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
-	if isErrorPoolAutostart {
-		test.Errorf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
 	}
 
 	errorPoolAutostart, isErrorPoolAutostart = poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
@@ -108,27 +136,13 @@ func TestPoolAutostartFalse(test *testing.T) {
 		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
+	errorPoolAutostart, isErrorPoolAutostart := helper.helperTestPoolAutostart(poolUuid, true)
+	if isErrorPoolAutostart {
+		test.Errorf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
+	}
+
 	var incomingRequest poolAutostart.Request
 	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
-		test,
-		"/home/hari/virest-storage-pool/.env",
-		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
-		64,
-		"/storage-pool/autostart",
-		http.MethodPatch,
-		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"autostart\":%t}", poolUuid, true),
-		&incomingRequest,
-	)
-	if isErrorHttpRequestPrecondition {
-		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
-	}
-
-	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
-	if isErrorPoolAutostart {
-		test.Fatalf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
-	}
-
-	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition = helperTestCreateRestApiConnection(
 		test,
 		"/home/hari/virest-storage-pool/.env",
 		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
@@ -169,27 +183,18 @@ func TestPoolAutostartFalseTwice(test *testing.T) {
 		test.Fatalf("defining pool test failed: %s", errorPoolDefine.Message)
 	}
 
+	errorPoolAutostart, isErrorPoolAutostart := helper.helperTestPoolAutostart(poolUuid, true)
+	if isErrorPoolAutostart {
+		test.Errorf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
+	}
+
+	errorPoolAutostart, isErrorPoolAutostart = helper.helperTestPoolAutostart(poolUuid, false)
+	if isErrorPoolAutostart {
+		test.Errorf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
+	}
+
 	var incomingRequest poolAutostart.Request
 	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
-		test,
-		"/home/hari/virest-storage-pool/.env",
-		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
-		64,
-		"/storage-pool/autostart",
-		http.MethodPatch,
-		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"autostart\":%t}", poolUuid, true),
-		&incomingRequest,
-	)
-	if isErrorHttpRequestPrecondition {
-		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
-	}
-
-	errorPoolAutostart, isErrorPoolAutostart := poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
-	if isErrorPoolAutostart {
-		test.Fatalf("turn on pool autostart test failed: %s", errorPoolAutostart.Message)
-	}
-
-	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition = helperTestCreateRestApiConnection(
 		test,
 		"/home/hari/virest-storage-pool/.env",
 		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
@@ -201,11 +206,6 @@ func TestPoolAutostartFalseTwice(test *testing.T) {
 	)
 	if isErrorHttpRequestPrecondition {
 		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
-	}
-
-	errorPoolAutostart, isErrorPoolAutostart = poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
-	if isErrorPoolAutostart {
-		test.Errorf("turn off pool autostart test failed: %s", errorPoolAutostart.Message)
 	}
 
 	errorPoolAutostart, isErrorPoolAutostart = poolConnection.PoolAutostart(incomingRequest.Uuid, incomingRequest.Autostart)
