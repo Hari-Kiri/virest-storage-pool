@@ -132,3 +132,163 @@ func TestFindStoragePoolSourceIscsi(test *testing.T) {
 		}
 	})
 }
+
+func TestFindStoragePoolSourceErrorDir(test *testing.T) {
+	requestData := findStoragePoolSources.Request{
+		Type: "dir",
+	}
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+	requestBody, errorMarshalStoragePool := json.Marshal(requestData)
+	virestError.Error, isError = errorMarshalStoragePool.(libvirt.Error)
+	if isError {
+		test.Fatalf("marshaling request body failed: %s", virestError.Message)
+	}
+
+	var incomingRequest findStoragePoolSources.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/find-storage-pool-sources",
+		http.MethodPost,
+		requestBody,
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	sources, errorFindStoragePoolSource, isErrorFindStoragePoolSource := poolConnection.FindStoragePoolSource(
+		incomingRequest.Type,
+		incomingRequest.SrcSpec.Source,
+	)
+	if isErrorFindStoragePoolSource {
+		test.Logf("find storage pool dir source test failed: %s", errorFindStoragePoolSource.Message)
+	}
+	if !isErrorFindStoragePoolSource {
+		test.Errorf("this test must be failed, but it won't: %v", sources)
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
+
+func TestFindStoragePoolSourceNotFoundIscsi(test *testing.T) {
+	requestData := findStoragePoolSources.Request{
+		Type: "iscsi",
+		SrcSpec: findStoragePoolSources.Source{
+			Source: libvirtxml.Source{
+				Host: libvirtxml.Host{
+					Name: netfsHost,
+					Port: 3260,
+				},
+			},
+		},
+	}
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+	requestBody, errorMarshalStoragePool := json.Marshal(requestData)
+	virestError.Error, isError = errorMarshalStoragePool.(libvirt.Error)
+	if isError {
+		test.Fatalf("marshaling request body failed: %s", virestError.Message)
+	}
+
+	var incomingRequest findStoragePoolSources.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/find-storage-pool-sources",
+		http.MethodPost,
+		requestBody,
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	sources, errorFindStoragePoolSource, isErrorFindStoragePoolSource := poolConnection.FindStoragePoolSource(
+		incomingRequest.Type,
+		incomingRequest.SrcSpec.Source,
+	)
+	if isErrorFindStoragePoolSource {
+		test.Logf("find storage pool iscsi source test failed: %s", errorFindStoragePoolSource.Message)
+	}
+	if !isErrorFindStoragePoolSource {
+		test.Errorf("this test must be failed, but it won't: %v", sources)
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
+
+func TestFindStoragePoolSourceNotFoundNetfs(test *testing.T) {
+	requestData := findStoragePoolSources.Request{
+		Type: "netfs",
+		SrcSpec: findStoragePoolSources.Source{
+			Source: libvirtxml.Source{
+				Host: libvirtxml.Host{
+					Name: iscsiHost,
+					Port: 2049,
+				},
+			},
+		},
+	}
+	var (
+		virestError virest.Error
+		isError     bool
+	)
+	requestBody, errorMarshalStoragePool := json.Marshal(requestData)
+	virestError.Error, isError = errorMarshalStoragePool.(libvirt.Error)
+	if isError {
+		test.Fatalf("marshaling request body failed: %s", virestError.Message)
+	}
+
+	var incomingRequest findStoragePoolSources.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/find-storage-pool-sources",
+		http.MethodPost,
+		requestBody,
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	sources, errorFindStoragePoolSource, isErrorFindStoragePoolSource := poolConnection.FindStoragePoolSource(
+		incomingRequest.Type,
+		incomingRequest.SrcSpec.Source,
+	)
+	if isErrorFindStoragePoolSource {
+		test.Logf("find storage pool netfs source test failed: %s", errorFindStoragePoolSource.Message)
+	}
+	if !isErrorFindStoragePoolSource {
+		test.Errorf("this test must be failed, but it won't: %v", sources)
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
