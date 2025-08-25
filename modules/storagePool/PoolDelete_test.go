@@ -161,3 +161,113 @@ func TestPoolDeleteClearAllToZeros(test *testing.T) {
 		}
 	})
 }
+
+func TestPoolDeleteMetadaOnlyWrongUuid(test *testing.T) {
+	helper := helperTest{
+		test: test,
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	errorPoolCreate, isErrorPoolCreate := helper.helperTestPoolCreate(poolUuid, libvirt.STORAGE_POOL_CREATE_WITH_BUILD)
+	if isErrorPoolCreate {
+		test.Fatalf("creating pool test failed: %s", errorPoolCreate.Message)
+	}
+
+	errorPoolDestroy, isErrorPoolDestroy := helper.helperTestPoolDestroy(poolUuid)
+	if isErrorPoolDestroy {
+		test.Fatalf("pool destroy failed: %s", errorPoolDestroy.Message)
+	}
+
+	var incomingRequest poolDelete.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/delete",
+		http.MethodDelete,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", "ca3e11bd-b840-4412-9f44-89b8d09b9f4e", libvirt.STORAGE_POOL_DELETE_NORMAL),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolDelete, isErrorPoolDelete := poolConnection.PoolDelete(incomingRequest.Uuid, incomingRequest.Option)
+	if isErrorPoolDelete {
+		test.Logf("deleting pool test failed: %s", errorPoolDelete.Message)
+	}
+	if !isErrorPoolDelete {
+		test.Error("this test must be failed, but it won't")
+	}
+
+	test.Cleanup(func() {
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
+
+func TestPoolDeleteMetadaOnlyUuidNotValid(test *testing.T) {
+	helper := helperTest{
+		test: test,
+	}
+
+	poolUuid, errorPoolDefine, isErrorPoolDefine := helper.helperTestPoolDefine(storagePoolDirectory, libvirt.STORAGE_POOL_DEFINE_VALIDATE)
+	if isErrorPoolDefine {
+		test.Fatalf("pool define failed: %s", errorPoolDefine.Message)
+	}
+
+	errorPoolCreate, isErrorPoolCreate := helper.helperTestPoolCreate(poolUuid, libvirt.STORAGE_POOL_CREATE_WITH_BUILD)
+	if isErrorPoolCreate {
+		test.Fatalf("creating pool test failed: %s", errorPoolCreate.Message)
+	}
+
+	errorPoolDestroy, isErrorPoolDestroy := helper.helperTestPoolDestroy(poolUuid)
+	if isErrorPoolDestroy {
+		test.Fatalf("pool destroy failed: %s", errorPoolDestroy.Message)
+	}
+
+	var incomingRequest poolDelete.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/delete",
+		http.MethodDelete,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\",\"option\":%d}", "ca3e11bd-b840-4412-9f44-", libvirt.STORAGE_POOL_DELETE_NORMAL),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolDelete, isErrorPoolDelete := poolConnection.PoolDelete(incomingRequest.Uuid, incomingRequest.Option)
+	if isErrorPoolDelete {
+		test.Logf("deleting pool test failed: %s", errorPoolDelete.Message)
+	}
+	if !isErrorPoolDelete {
+		test.Error("this test must be failed, but it won't")
+	}
+
+	test.Cleanup(func() {
+		if errorPoolUndefine, isErrorPoolUndefine := helper.helperTestPoolUndefine(poolUuid); isErrorPoolUndefine {
+			test.Errorf("pool undefine failed: %s", errorPoolUndefine.Message)
+		}
+
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
