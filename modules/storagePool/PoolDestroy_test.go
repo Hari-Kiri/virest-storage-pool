@@ -89,3 +89,67 @@ func TestPoolDestroy(test *testing.T) {
 		}
 	})
 }
+
+func TestPoolDestroyWrongUuid(test *testing.T) {
+	var incomingRequest poolDestroy.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/destroy",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\"}", "ca3e11bd-b840-4412-9f44-89b8d09b9f4e"),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolDestroy, isErrorPoolDestroy := poolConnection.PoolDestroy(incomingRequest.Uuid)
+	if isErrorPoolDestroy {
+		test.Logf("pool destroy test failed: %s", errorPoolDestroy.Message)
+	}
+	if !isErrorPoolDestroy {
+		test.Error("this test must be failed, but it won't")
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
+
+func TestPoolDestroyUuidNotValis(test *testing.T) {
+	var incomingRequest poolDestroy.Request
+	poolConnection, errorHttpRequestPrecondition, isErrorHttpRequestPrecondition := helperTestCreateRestApiConnection(
+		test,
+		"/home/hari/virest-storage-pool/.env",
+		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
+		64,
+		"/storage-pool/destroy",
+		http.MethodPatch,
+		fmt.Appendf(nil, "{\"uuid\":\"%s\"}", "ca3e11bd-b840-4412-9f44-"),
+		&incomingRequest,
+	)
+	if isErrorHttpRequestPrecondition {
+		test.Fatalf("http request precondition failed: %s", errorHttpRequestPrecondition.Message)
+	}
+
+	errorPoolDestroy, isErrorPoolDestroy := poolConnection.PoolDestroy(incomingRequest.Uuid)
+	if isErrorPoolDestroy {
+		test.Logf("pool destroy test failed: %s", errorPoolDestroy.Message)
+	}
+	if !isErrorPoolDestroy {
+		test.Error("this test must be failed, but it won't")
+	}
+
+	test.Cleanup(func() {
+		connectionReference, errorClosingPoolConnection := poolConnection.Close()
+		if errorClosingPoolConnection != nil {
+			test.Errorf("closing pool connection %d failed: %s", connectionReference, errorClosingPoolConnection.Error())
+		}
+	})
+}
