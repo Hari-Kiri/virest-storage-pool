@@ -18,7 +18,7 @@ func TestPoolListDetailActive(test *testing.T) {
 		"/home/hari/virest-storage-pool/.env",
 		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
 		64,
-		fmt.Sprintf("/storage-pool/info?Option=%d&Inactive=%d", 0, 0),
+		fmt.Sprintf("/storage-pool/list?Option=%d&Inactive=%d", 0, 0),
 		string(http.MethodGet),
 		[]byte{},
 		&incomingRequest,
@@ -62,7 +62,7 @@ func TestPoolListDetailInactive(test *testing.T) {
 		"/home/hari/virest-storage-pool/.env",
 		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
 		64,
-		fmt.Sprintf("/storage-pool/info?Option=%d&Inactive=%d", 0, libvirt.STORAGE_XML_INACTIVE),
+		fmt.Sprintf("/storage-pool/list?Option=%d&Inactive=%d", 0, libvirt.STORAGE_XML_INACTIVE),
 		string(http.MethodGet),
 		[]byte{},
 		&incomingRequest,
@@ -106,7 +106,7 @@ func TestPoolListDetailErrorInactiveParameter(test *testing.T) {
 		"/home/hari/virest-storage-pool/.env",
 		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
 		64,
-		fmt.Sprintf("/storage-pool/info?Option=%d&Inactive=%d", 0, libvirt.CONNECT_LIST_STORAGE_POOLS_GLUSTER),
+		fmt.Sprintf("/storage-pool/list?Option=%d&Inactive=%d", 0, libvirt.CONNECT_LIST_STORAGE_POOLS_GLUSTER),
 		string(http.MethodGet),
 		[]byte{},
 		&incomingRequest,
@@ -148,7 +148,7 @@ func TestPoolListDetailErrorOptionParameter(test *testing.T) {
 		"/home/hari/virest-storage-pool/.env",
 		210000, // circa 2023 OWASP recommendation for PBKDF2-HMAC-SHA512 iterations
 		64,
-		fmt.Sprintf("/storage-pool/info?Option=%d&Inactive=%d", 1048576, 0),
+		fmt.Sprintf("/storage-pool/list?Option=%d&Inactive=%d", 1048576, 0),
 		string(http.MethodGet),
 		[]byte{},
 		&incomingRequest,
