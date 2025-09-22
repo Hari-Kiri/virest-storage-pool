@@ -1,6 +1,7 @@
 package storagePool
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -58,8 +59,10 @@ func PoolEvent(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	if timeout > -1 {
-		poolConnection.PoolEventTimeout(requestBodyData.Uuid, responseWriter, request, types, timeout)
-		return
+		// poolConnection.PoolEventTimeout(requestBodyData.Uuid, responseWriter, types, timeout)
+		pipeReader, pipeWriter := io.Pipe()
+		poolConnection.PoolEventStream(requestBodyData.Uuid, types, timeout, pipeWriter)
+		temboLog.InfoLogging(pipeReader)
 	}
 
 	result, errorGetStoragePoolEvent, isErrorGetStoragePoolEvent := poolConnection.PoolEvent(requestBodyData.Uuid, types)
