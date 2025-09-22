@@ -25,4 +25,5 @@ type Event struct {
 
 	Timestamp     int64
 	TimestampNano int64
+	EventId       int
 }
