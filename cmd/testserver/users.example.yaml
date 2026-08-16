@@ -1,0 +1,13 @@
+users:
+  - username: john
+    # Lab-only plaintext; prefer password_hash (bcrypt) in real deployments.
+    password: password
+    role: operator
+    hypervisor_allowlist:
+      - "qemu:///system"
+      - "qemu:///session"
+  - username: alice
+    password: password
+    role: reader
+    hypervisor_allowlist:
+      - "qemu:///session"

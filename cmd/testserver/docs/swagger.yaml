@@ -1,0 +1,588 @@
+basePath: /
+definitions:
+  handlers.AutostartRequest:
+    properties:
+      autostart:
+        example: true
+        type: boolean
+      uuid:
+        example: 00000000-0000-0000-0000-000000000000
+        type: string
+    type: object
+  handlers.DefineRequest:
+    properties:
+      option:
+        example: 0
+        type: integer
+      storagePool: {}
+    type: object
+  handlers.Envelope:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        type: string
+      response:
+        type: boolean
+    type: object
+  handlers.FindSourcesRequest:
+    properties:
+      srcSpec: {}
+      type:
+        example: netfs
+        type: string
+    type: object
+  handlers.TokenEnvelope:
+    properties:
+      code:
+        type: integer
+      data:
+        properties:
+          token:
+            type: string
+        type: object
+      error:
+        type: string
+      response:
+        type: boolean
+    type: object
+  handlers.UuidOptionRequest:
+    properties:
+      option:
+        example: 0
+        type: integer
+      uuid:
+        example: 00000000-0000-0000-0000-000000000000
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: Optional HTTP harness for the storagepool Go library. Authenticate
+    with Basic Auth to get a JWT, then call pool APIs with Bearer token and Hypervisor-Uri
+    header. Use Authorize in Swagger UI to set credentials (Postman-like try-it-out).
+  title: ViRest Storage Pool Testserver
+  version: "1.0"
+paths:
+  /storage-pool/authenticate:
+    get:
+      description: Authenticate with HTTP Basic and receive a Bearer JWT
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TokenEnvelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BasicAuth: []
+      summary: Issue JWT
+      tags:
+      - auth
+  /storage-pool/autostart:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Autostart settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AutostartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Set pool autostart
+      tags:
+      - pools
+  /storage-pool/build:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID and build flags
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UuidOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Build pool storage
+      tags:
+      - pools
+  /storage-pool/capabilities:
+    get:
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get storage pool capabilities
+      tags:
+      - pools
+  /storage-pool/create:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID and create flags
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UuidOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create (start) a pool
+      tags:
+      - pools
+  /storage-pool/define:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool definition
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.DefineRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Define a storage pool
+      tags:
+      - pools
+  /storage-pool/delete:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID and delete flags
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UuidOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Delete pool resources
+      tags:
+      - pools
+  /storage-pool/destroy:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UuidOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Destroy (stop) a pool
+      tags:
+      - pools
+  /storage-pool/detail:
+    get:
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID
+        in: query
+        name: uuid
+        required: true
+        type: string
+      - description: XML flags
+        in: query
+        name: option
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get pool detail
+      tags:
+      - pools
+  /storage-pool/event:
+    get:
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID
+        in: query
+        name: uuid
+        required: true
+        type: string
+      - description: 0=lifecycle, 1=refresh
+        in: query
+        name: types
+        type: integer
+      - description: Set to 1 for SSE
+        in: query
+        name: stream
+        type: string
+      - description: SSE timeout seconds
+        in: query
+        name: timeout
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Wait for pool event (or SSE stream)
+      tags:
+      - events
+  /storage-pool/find-storage-pool-sources:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool type and source spec
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.FindSourcesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Find storage pool sources
+      tags:
+      - pools
+  /storage-pool/get-gid:
+    get:
+      parameters:
+      - description: Libvirt URI (allowlist check)
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Process GID of the testserver
+      tags:
+      - meta
+  /storage-pool/get-uid:
+    get:
+      parameters:
+      - description: Libvirt URI (allowlist check)
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Process UID of the testserver
+      tags:
+      - meta
+  /storage-pool/info:
+    get:
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID
+        in: query
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get pool info
+      tags:
+      - pools
+  /storage-pool/list:
+    get:
+      parameters:
+      - description: Libvirt URI (must be allowlisted)
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: List flags
+        in: query
+        name: option
+        type: integer
+      - description: XML flags for inactive pools
+        in: query
+        name: inactive
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: List storage pools
+      tags:
+      - pools
+  /storage-pool/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID (or JSON body)
+        in: query
+        name: uuid
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Refresh pool volumes
+      tags:
+      - pools
+  /storage-pool/undefine:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Libvirt URI
+        in: header
+        name: Hypervisor-Uri
+        required: true
+        type: string
+      - description: Pool UUID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UuidOptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Undefine a pool
+      tags:
+      - pools
+securityDefinitions:
+  BasicAuth:
+    type: basic
+  BearerAuth:
+    description: 'JWT from /storage-pool/authenticate. Prefer value: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
