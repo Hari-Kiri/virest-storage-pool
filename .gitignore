@@ -23,7 +23,10 @@ go.work.sum
 
 # env file
 .env
+cmd/testserver/users.yaml
 
 # Vscode launcher generated binary files
 __debug_bin*
 .vscode
+
+.cursor/*
