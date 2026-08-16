@@ -1,34 +1,115 @@
-# ViRest Storage Pool
-## Go Package for Managing Virtualization Storage Pool
-A storage pool is a quantity of storage set aside by an administrator, often a dedicated storage administrator, for use by virtual machines. Storage pools are divided into storage volumes either by the storage administrator or the system administrator, and the volumes are assigned to VMs as block devices.
+# ViRest
 
-For example, the storage administrator responsible for an NFS server creates a share to store virtual machines' data. The system administrator defines a pool on the virtualization host with the details of the share (e.g. nfs.example.com:/path/to/share should be mounted on /vm_data). When the pool is started, libvirt mounts the share on the specified directory, just as if the system administrator logged in and executed 'mount nfs.example.com:/path/to/share /vmdata'. If the pool is configured to autostart, libvirt ensures that the NFS share is mounted on the directory specified when libvirt is started.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-ViRest provides storage management on the physical host through storage pools and volumes. This Go package provides the REST API interface by utilizing Libvirt.
+Go library for managing **libvirt storage pools** from application code. Import `storagePool`, connect to a hypervisor URI, and call typed methods — no HTTP server required.
 
-## Needed Package to Running Executable using Qemu/KVM Hypervisor
-- qemu-kvm
-- libvirt-daemon-system
-- bridge-utils
+An optional `cmd/testserver` harness is included for manual/e2e HTTP testing (multi-user JWT auth, TLS, OpenAPI).
 
-## Needed Package for Development and Compiling
-- libvirt-dev
-- gcc
+## Install
 
-## Add User to Libvirt Group & KVM Group
-```shell
-sudo adduser '<username>' libvirt
-```
-```shell
-sudo adduser '<username>' kvm
+```bash
+go get github.com/Hari-Kiri/virest/storagePool
 ```
 
-## Known error:
-- Libvirt Go Binding methods undefined, please enable "cgo" with command:
-    ```shell
-    export CGO_ENABLED=1
-    ```
-- [Can't access storage, file permission denied](https://ostechnix.com/solved-cannot-access-storage-file-permission-denied-error-in-kvm-libvirt/)
+Requires **CGO**, **libvirt** development headers, and a reachable libvirt daemon.
 
-#### References
-- https://libvirt.org/storage.html
+```bash
+export CGO_ENABLED=1
+# Debian/Ubuntu packages commonly needed:
+# libvirt-dev gcc
+```
+
+## Quick start
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/Hari-Kiri/virest/storagePool"
+)
+
+func main() {
+	conn, err := storagePool.Connect("qemu:///system")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	pools, err := conn.List(0, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(len(pools), "pools")
+}
+```
+
+See also [`examples/basic`](examples/basic).
+
+## Library API
+
+| Method | Purpose |
+|--------|---------|
+| `Connect` / `Close` | Open and release a hypervisor connection |
+| `Define` / `Build` / `Create` | Define and start pools |
+| `Destroy` / `Undefine` / `Delete` | Stop, remove definition, delete resources |
+| `Refresh` / `Autostart` | Refresh volumes; set autostart |
+| `List` / `Info` / `Detail` | Inspect pools |
+| `Capabilities` / `FindSources` | Discovery helpers |
+| `WaitEvent` / `StreamEvents` | Lifecycle/refresh events |
+
+`StreamEvents` is transport-agnostic (`context` + callback). For event APIs, register the process-wide libvirt event loop once:
+
+```go
+libvirt.EventRegisterDefaultImpl()
+go func() {
+	for {
+		_ = libvirt.EventRunDefaultImpl()
+	}
+}()
+```
+
+## Tests
+
+Unit tests (no live libvirt; mocked interfaces):
+
+```bash
+export CGO_ENABLED=1
+go test ./storagePool/ ./virestUtilities/ ./cmd/testserver/...
+```
+
+Integration tests (live libvirt):
+
+```bash
+export CGO_ENABLED=1
+export VIREST_LIBVIRT_URI=qemu:///system   # optional
+export VIREST_TEST_POOL_DIR=/tmp/virest-pool  # optional
+go test -tags=integration ./storagePool/
+```
+
+Destructive disk tests run only when `VIREST_TEST_DISK` is set.
+
+## Benchmarks
+
+```bash
+go test ./storagePool/ -bench=. -benchmem
+```
+
+## Optional testserver
+
+```bash
+cd cmd/testserver
+cp .env_dummy .env
+cp users.example.yaml users.yaml
+# edit secrets / users, then:
+go run .
+```
+
+Swagger UI: `/swagger/`.
+
+## License
+
+MIT

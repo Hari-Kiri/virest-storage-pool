@@ -1,0 +1,98 @@
+version: "2"
+run:
+  concurrency: 4
+  go: "1.25"
+  modules-download-mode: readonly
+  tests: false
+  allow-parallel-runners: true
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+  path-prefix: ""
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - cyclop
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - funlen
+    - gocheckcompilerdirectives
+    - goconst
+    - gocritic
+    - gomodguard_v2
+    - goprintffuncname
+    - govet
+    - ineffassign
+    - makezero
+    - nakedret
+    - nilerr
+    - nilnil
+    - nolintlint
+    - nosprintfhostport
+    - reassign
+    - revive
+    - rowserrcheck
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+  settings:
+    cyclop:
+      max-complexity: 30
+      package-average: 15
+    funlen:
+      lines: 70
+      statements: 50
+    gocritic:
+      disabled-checks:
+        - sloppyLen
+        - commentFormatting
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+        - name: exported
+          arguments:
+            - disableStutteringCheck
+    tagalign:
+      align: true
+      sort: true
+      order:
+        - bson
+        - json
+        - yaml
+        - yml
+        - toml
+        - mapstructure
+        - binding
+        - validate
+      strict: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules: []
+    paths: []
+issues:
+  max-issues-per-linter: 150
+  max-same-issues: 30
+  uniq-by-line: true
+formatters:
+  exclusions:
+    generated: lax
+    paths: []

@@ -1,0 +1,137 @@
+package main
+
+import (
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/Hari-Kiri/virest/cmd/testserver/auth"
+	"github.com/Hari-Kiri/virest/cmd/testserver/handlers"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"libvirt.org/go/libvirt"
+
+	_ "github.com/Hari-Kiri/virest/cmd/testserver/docs"
+)
+
+//	@title			ViRest Storage Pool Testserver
+//	@version		1.0
+//	@description	Optional HTTP harness for the storagepool Go library. Authenticate with Basic Auth to get a JWT, then call pool APIs with Bearer token and Hypervisor-Uri header. Use Authorize in Swagger UI to set credentials (Postman-like try-it-out).
+//	@host			localhost:8000
+//	@BasePath		/
+//
+//	@securityDefinitions.basic	BasicAuth
+//
+//	@securityDefinitions.apikey	BearerAuth
+//	@in							header
+//	@name						Authorization
+//	@description				JWT from /storage-pool/authenticate. Prefer value: Bearer {token}
+func main() {
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo})))
+
+	loadDotEnv(".env")
+
+	appName := envOr("VIREST_STORAGE_POOL_APPLICATION_NAME", "virest-storage-pool-testserver")
+	port, err := strconv.Atoi(envOr("VIREST_STORAGE_POOL_APPLICATION_PORT", "8000"))
+	if err != nil {
+		slog.Error("invalid port", "err", err)
+		os.Exit(1)
+	}
+	lifetimeSec, err := strconv.Atoi(envOr("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS", "3600"))
+	if err != nil {
+		slog.Error("invalid jwt lifetime", "err", err)
+		os.Exit(1)
+	}
+	usersPath := envOr("VIREST_USERS_FILE", "users.yaml")
+	cfg, err := auth.LoadUsersFile(usersPath)
+	if err != nil {
+		slog.Error("load users file", "path", usersPath, "err", err)
+		os.Exit(1)
+	}
+	store, err := auth.NewStore(
+		cfg,
+		appName,
+		[]byte(os.Getenv("VIREST_STORAGE_POOL_APPLICATION_JWT_SIGNATURE_KEY")),
+		time.Duration(lifetimeSec)*time.Second,
+	)
+	if err != nil {
+		slog.Error("auth store", "err", err)
+		os.Exit(1)
+	}
+
+	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
+		slog.Error("event register", "err", err)
+		os.Exit(1)
+	}
+	go func() {
+		for {
+			if err := libvirt.EventRunDefaultImpl(); err != nil {
+				slog.Error("event loop", "err", err)
+				os.Exit(1)
+			}
+		}
+	}()
+
+	deps := &handlers.Deps{Auth: store}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/storage-pool/authenticate", deps.Authenticate)
+	mux.HandleFunc("/storage-pool/find-storage-pool-sources", deps.FindSources)
+	mux.HandleFunc("/storage-pool/list", deps.List)
+	mux.HandleFunc("/storage-pool/info", deps.Info)
+	mux.HandleFunc("/storage-pool/detail", deps.Detail)
+	mux.HandleFunc("/storage-pool/get-uid", deps.ProcessUID)
+	mux.HandleFunc("/storage-pool/get-gid", deps.ProcessGID)
+	mux.HandleFunc("/storage-pool/define", deps.Define)
+	mux.HandleFunc("/storage-pool/build", deps.Build)
+	mux.HandleFunc("/storage-pool/create", deps.Create)
+	mux.HandleFunc("/storage-pool/autostart", deps.Autostart)
+	mux.HandleFunc("/storage-pool/destroy", deps.Destroy)
+	mux.HandleFunc("/storage-pool/undefine", deps.Undefine)
+	mux.HandleFunc("/storage-pool/delete", deps.Delete)
+	mux.HandleFunc("/storage-pool/refresh", deps.Refresh)
+	mux.HandleFunc("/storage-pool/capabilities", deps.Capabilities)
+	mux.HandleFunc("/storage-pool/event", deps.Event)
+	mux.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
+
+	addr := fmt.Sprintf(":%d", port)
+	cert := os.Getenv("VIREST_TLS_CERT_FILE")
+	key := os.Getenv("VIREST_TLS_KEY_FILE")
+	slog.Info("testserver listening", "addr", addr, "app", appName, "swagger", fmt.Sprintf("http://localhost:%d/swagger/index.html", port))
+	if cert != "" && key != "" {
+		slog.Error("listen tls", "err", http.ListenAndServeTLS(addr, cert, key, mux))
+		os.Exit(1)
+	}
+	slog.Info("TLS cert/key not set; serving plaintext (lab only)")
+	slog.Error("listen", "err", http.ListenAndServe(addr, mux))
+	os.Exit(1)
+}
+
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func loadDotEnv(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	for _, row := range strings.Split(string(data), "\n") {
+		row = strings.TrimSpace(row)
+		if row == "" || strings.HasPrefix(row, "#") {
+			continue
+		}
+		parts := strings.SplitN(row, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		_ = os.Setenv(parts[0], parts[1])
+	}
+}
