@@ -1,18 +1,30 @@
-module github.com/Hari-Kiri/virest-storage-pool
+module github.com/Hari-Kiri/virest
 
 go 1.23.4
 
 require (
-	github.com/Hari-Kiri/goalMakeHandler v0.1.3
-	github.com/Hari-Kiri/temboLog v0.1.3
 	libvirt.org/go/libvirt v1.11002.0
 	libvirt.org/go/libvirtxml v1.11002.0
 )
 
 require (
-	github.com/Hari-Kiri/virest-utilities v0.3.4
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/swaggo/http-swagger/v2 v2.0.2
+	github.com/swaggo/swag v1.16.4
 	golang.org/x/crypto v0.38.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/Hari-Kiri/virest-storage-volume v0.4.0-dev // indirect
+require (
+	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/go-openapi/jsonpointer v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
+	github.com/go-openapi/spec v0.20.6 // indirect
+	github.com/go-openapi/swag v0.19.15 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
+	github.com/mailru/easyjson v0.7.6 // indirect
+	github.com/swaggo/files/v2 v2.0.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/tools v0.7.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+)
