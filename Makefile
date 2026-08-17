@@ -7,11 +7,15 @@ CGO_ENABLED ?= 1
 export CGO_ENABLED
 
 COVER_MIN ?= 70
-TEST_PKGS := ./storagePool/ ./virestUtilities/ ./cmd/testserver/...
-COVER_PKGS := ./storagePool/ ./virestUtilities/
-BENCH_PKGS := ./storagePool/ ./virestUtilities/
+# Keep in sync with `go list ./...` minus generated (`./cmd/testserver/docs`) and vendor.
+# Match .github/workflows/golangci-lint.yaml args.
+# New library/cmd packages: add to TEST_PKGS + COVER_PKGS (≥70% pos+neg) + BENCH_PKGS (HA-safe).
+LINT_PKGS := ./storagePool/ ./utilities/ ./cmd/testserver/... ./examples/...
+TEST_PKGS := ./storagePool/ ./utilities/ ./cmd/testserver/...
+COVER_PKGS := ./storagePool/ ./utilities/
+BENCH_PKGS := ./storagePool/ ./utilities/
 
-.PHONY: swagger test test-cover bench check
+.PHONY: swagger test test-cover bench lint check
 
 # Unit tests with per-package coverage summary (pos+neg cases in packages).
 test:
@@ -43,8 +47,12 @@ bench:
 	@echo "HA-safe benchmarks: review ns/op, B/op, allocs/op (fix regressions / alloc storms)"
 	go test $(BENCH_PKGS) -run='^$$' -bench=. -benchmem -count=1
 
-# Full local HA gate: coverage floor + benches with alloc metrics.
-check: test-cover bench
+# Same command as CI (.github/workflows/golangci-lint.yaml). Fix every finding.
+lint:
+	golangci-lint run --timeout=5m $(LINT_PKGS)
+
+# Full local HA gate: coverage floor + benches with alloc metrics + lint.
+check: test-cover bench lint
 
 # Regenerate OpenAPI/Swagger from Go annotations.
 swagger:
