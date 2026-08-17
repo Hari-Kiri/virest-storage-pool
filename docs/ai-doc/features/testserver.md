@@ -14,7 +14,9 @@ Optional HTTP harness for manual/e2e exercise of `storagepool`. **Not** the prim
 
 ## Entry
 
-`cmd/testserver/main.go`
+`cmd/testserver/main.go` — `main` loads env, builds auth via `mustAuthStore`, starts libvirt events (`startLibvirtEvents`), registers routes (`registerRoutes`), then listens (`runServer`).
+
+Handler shared code: `cmd/testserver/handlers/common.go` (`authorize` → hypervisor URI; `uuidData` for UUID JSON payloads; `httpStatusFor` via `utilities.Code`).
 
 ## Used By
 

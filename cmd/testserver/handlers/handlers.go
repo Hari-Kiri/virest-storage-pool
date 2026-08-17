@@ -39,11 +39,11 @@ func (d *Deps) Authenticate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-var errBasicAuthRequired = errString("basic auth required")
+var errBasicAuthRequired = handlerError("basic auth required")
 
-type errString string
+type handlerError string
 
-func (e errString) Error() string { return string(e) }
+func (e handlerError) Error() string { return string(e) }
 
 // List lists storage pools.
 //
@@ -59,7 +59,7 @@ func (e errString) Error() string { return string(e) }
 //	@Router			/storage-pool/list [get]
 func (d *Deps) List(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	conn, err := d.connect(r)
@@ -69,12 +69,12 @@ func (d *Deps) List(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	option, err := parseUint(query(r, "option"), 0)
+	option, err := parseUint(query(r, "option"))
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	inactive, err := parseUint(query(r, "inactive"), 0)
+	inactive, err := parseUint(query(r, "inactive"))
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -100,7 +100,7 @@ func (d *Deps) List(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/info [get]
 func (d *Deps) Info(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	conn, err := d.connect(r)
@@ -131,7 +131,7 @@ func (d *Deps) Info(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/detail [get]
 func (d *Deps) Detail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	conn, err := d.connect(r)
@@ -140,7 +140,7 @@ func (d *Deps) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
-	option, err := parseUint(query(r, "option"), 0)
+	option, err := parseUint(query(r, "option"))
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -165,7 +165,7 @@ func (d *Deps) Detail(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/capabilities [get]
 func (d *Deps) Capabilities(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	conn, err := d.connect(r)
@@ -196,7 +196,7 @@ func (d *Deps) Capabilities(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/define [post]
 func (d *Deps) Define(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	var body struct {
@@ -218,7 +218,7 @@ func (d *Deps) Define(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, Envelope{Response: true, Data: map[string]string{"uuid": uuid}})
+	writeJSON(w, http.StatusCreated, Envelope{Response: true, Data: uuidData(uuid)})
 }
 
 type uuidOptionRequest = UuidOptionRequest
@@ -227,7 +227,7 @@ type autostartRequest = AutostartRequest
 
 func (d *Deps) withUUIDConn(w http.ResponseWriter, r *http.Request, method string, fn func(*storagePool.Connection, string) error) {
 	if r.Method != method {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	var body uuidOptionRequest
@@ -245,7 +245,7 @@ func (d *Deps) withUUIDConn(w http.ResponseWriter, r *http.Request, method strin
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
-	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: map[string]string{"uuid": body.Uuid}})
+	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: uuidData(body.Uuid)})
 }
 
 // Build builds pool storage.
@@ -263,7 +263,7 @@ func (d *Deps) withUUIDConn(w http.ResponseWriter, r *http.Request, method strin
 func (d *Deps) Build(w http.ResponseWriter, r *http.Request) {
 	var body uuidOptionRequest
 	if r.Method != http.MethodPatch {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	if err := decodeJSON(r, &body); err != nil {
@@ -280,7 +280,7 @@ func (d *Deps) Build(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
-	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: map[string]string{"uuid": body.Uuid}})
+	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: uuidData(body.Uuid)})
 }
 
 // Create starts a pool.
@@ -298,7 +298,7 @@ func (d *Deps) Build(w http.ResponseWriter, r *http.Request) {
 func (d *Deps) Create(w http.ResponseWriter, r *http.Request) {
 	var body uuidOptionRequest
 	if r.Method != http.MethodPatch {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	if err := decodeJSON(r, &body); err != nil {
@@ -315,7 +315,7 @@ func (d *Deps) Create(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
-	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: map[string]string{"uuid": body.Uuid}})
+	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: uuidData(body.Uuid)})
 }
 
 // Destroy stops a pool.
@@ -369,7 +369,7 @@ func (d *Deps) Undefine(w http.ResponseWriter, r *http.Request) {
 func (d *Deps) Delete(w http.ResponseWriter, r *http.Request) {
 	var body uuidOptionRequest
 	if r.Method != http.MethodDelete {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	if err := decodeJSON(r, &body); err != nil {
@@ -403,7 +403,7 @@ func (d *Deps) Delete(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/refresh [post]
 func (d *Deps) Refresh(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	uuid := query(r, "uuid")
@@ -427,7 +427,7 @@ func (d *Deps) Refresh(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
-	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: map[string]string{"uuid": uuid}})
+	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: uuidData(uuid)})
 }
 
 // Autostart sets pool autostart.
@@ -444,7 +444,7 @@ func (d *Deps) Refresh(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/autostart [patch]
 func (d *Deps) Autostart(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPatch {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	var body autostartRequest
@@ -462,7 +462,7 @@ func (d *Deps) Autostart(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
-	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: map[string]string{"uuid": body.Uuid}})
+	writeJSON(w, http.StatusOK, Envelope{Response: true, Data: uuidData(body.Uuid)})
 }
 
 // FindSources discovers pool sources.
@@ -479,7 +479,7 @@ func (d *Deps) Autostart(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/find-storage-pool-sources [post]
 func (d *Deps) FindSources(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	var body struct {
@@ -520,7 +520,7 @@ func (d *Deps) FindSources(w http.ResponseWriter, r *http.Request) {
 //	@Router			/storage-pool/event [get]
 func (d *Deps) Event(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeErr(w, http.StatusMethodNotAllowed, errString("method not allowed"))
+		writeErr(w, http.StatusMethodNotAllowed, handlerError("method not allowed"))
 		return
 	}
 	conn, err := d.connect(r)
@@ -531,7 +531,7 @@ func (d *Deps) Event(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	uuid := query(r, "uuid")
-	kindU, err := parseUint(query(r, "types"), 0)
+	kindU, err := parseUint(query(r, "types"))
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -542,7 +542,7 @@ func (d *Deps) Event(w http.ResponseWriter, r *http.Request) {
 	if stream {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			writeErr(w, http.StatusInternalServerError, errString("streaming unsupported"))
+			writeErr(w, http.StatusInternalServerError, handlerError("streaming unsupported"))
 			return
 		}
 		timeoutSec, _ := strconv.Atoi(query(r, "timeout"))
@@ -592,7 +592,7 @@ func (d *Deps) Event(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401				{object}	Envelope
 //	@Router			/storage-pool/get-uid [get]
 func (d *Deps) ProcessUID(w http.ResponseWriter, r *http.Request) {
-	if _, _, err := d.authorize(r); err != nil {
+	if _, err := d.authorize(r); err != nil {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
@@ -610,7 +610,7 @@ func (d *Deps) ProcessUID(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401				{object}	Envelope
 //	@Router			/storage-pool/get-gid [get]
 func (d *Deps) ProcessGID(w http.ResponseWriter, r *http.Request) {
-	if _, _, err := d.authorize(r); err != nil {
+	if _, err := d.authorize(r); err != nil {
 		writeErr(w, httpStatusFor(err), err)
 		return
 	}
