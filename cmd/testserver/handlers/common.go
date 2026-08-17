@@ -9,7 +9,7 @@ import (
 
 	"github.com/Hari-Kiri/virest/cmd/testserver/auth"
 	"github.com/Hari-Kiri/virest/storagePool"
-	"github.com/Hari-Kiri/virest/virestUtilities"
+	"github.com/Hari-Kiri/virest/utilities"
 	"libvirt.org/go/libvirt"
 )
 
@@ -85,7 +85,7 @@ func httpStatusFor(err error) int {
 	if err == nil {
 		return http.StatusOK
 	}
-	if code, ok := virestUtilities.Code(err); ok {
+	if code, ok := utilities.Code(err); ok {
 		switch code {
 		case libvirt.ERR_AUTH_FAILED:
 			return http.StatusUnauthorized
