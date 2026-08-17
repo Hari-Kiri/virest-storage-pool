@@ -1,0 +1,134 @@
+---
+description: Senior Go + go-libvirt standards for this library
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Senior Golang (go-libvirt library)
+
+Act as a **senior Golang developer** and **expert at utilizing go-libvirt** for a mission-critical library.
+
+Before coding: learn and **mirror** existing structure/style under `storagePool/` (and matching neighbors in `cmd/`, `examples/`). Do not invent new layering.
+
+## Scope
+
+These standards apply to **all** of: `storagePool/`, `utilities/`, `cmd/` (testserver), `examples/`.
+
+## Library specification (must follow)
+
+- Prevent performance bottlenecks; keep algorithmic complexity as low as practical (prefer O(1)/O(n); avoid O(n²)+ on hot paths).
+- Avoid N+1 query problems (do not look up / Free / reconnect per item when one list/batch call suffices; reuse handles carefully with Ref/Free).
+- Industry-standard, production-grade: explicit errors, resource cleanup, no silent failure, HA-safe.
+- Avoid nested `if` and nested `for`; extract methods for readability and flatter control flow.
+- Prefer `for i := 0; i < n; i++` over `for range` in new/changed code under the Scope paths.
+- Deployed on **HA cluster hypervisor nodes** — keep allocations, locks, syscalls, and libvirt round-trips minimal.
+
+## Allowed dependencies
+
+| Layer | Allowed |
+|-------|---------|
+| `storagePool/`, `utilities/` | stdlib, `libvirt.org/go/libvirt`, `libvirt.org/go/libvirtxml`, each other |
+| `cmd/testserver/` | above + `swaggo/*`, `golang-jwt/jwt`, users-file stack (`gopkg.in/yaml.v3`, `golang.org/x/crypto/bcrypt`) |
+| `examples/` | stdlib + in-repo `storagePool` / `utilities` only |
+
+Do **not** add other third-party modules to the library path. Prefer stdlib parallel helpers over new sync packages.
+
+## Code structure to follow
+
+| Layer | Pattern |
+|-------|---------|
+| `storagePool/` | Public API on `*Connection`; ports `hypervisor`/`poolHandle`; adapter in `libvirt_adapter.go`; DTOs in `types.go`; `wrap` via `utilities` |
+| `cmd/testserver/` | Thin HTTP: auth → connect via library → map errors to envelope; no business logic duplicated from library |
+| `examples/` | Short demos: Connect, defer Close, call library, print; mirror library loop/err style |
+
+## Control flow & loops
+
+```go
+// Prefer indexed loops
+n := len(pools)
+for i := 0; i < n; i++ {
+	summary, err := summarizePool(pools[i], xmlFlags)
+	pools[i].Free()
+	if err != nil {
+		freePoolsFrom(pools, i+1)
+		return nil, err
+	}
+	result[i] = summary
+}
+```
+
+```go
+// Prefer expanded err check (no one-line if-init)
+var model libvirtxml.StoragePool
+err := model.Unmarshal(doc)
+if err != nil {
+	return libvirtxml.StoragePool{}, wrap("unmarshal pool xml", err)
+}
+```
+
+- Early return over nesting.
+- Magic numbers/strings → named constants.
+
+## Performance / HA
+
+- No unbounded scans or repeated libvirt lookups for the same UUID in one request.
+- Parallelize independent attribute reads with stdlib (`runParallel` / WaitGroup + Ref) only for fixed small task sets; List/hot multi-item paths stay sequential. Do not spawn unbounded goroutines.
+- Goroutines must respect caller `ctx` cancellation when streaming/waiting.
+- Prefer pre-sized slices (`make([]T, n)`), avoid repeated append growth on hot paths.
+- Close/Free every libvirt object you open; never leak across HA node load.
+
+## Unit tests + benchmarks
+
+| Path | Coverage | Benchmarks |
+|------|----------|------------|
+| `storagePool/`, `utilities/` | **≥70%**; positive **and** negative | **Always** for touched hot paths |
+| `cmd/testserver/auth/`, `handlers/` | **≥70%** on touched packages; pos+neg | When touched code has a non-trivial hot path |
+| `examples/` | No coverage mandate | Skip |
+
+```bash
+go test ./storagePool/ ./utilities/ ./cmd/testserver/... -cover
+go test ./storagePool/ ./utilities/ -bench=. -benchmem
+```
+
+Thin passthrough in `libvirt_adapter.go` may be excluded from the coverage bar (covered by integration); all other library logic counts toward ≥70%. Generated `cmd/testserver/docs/` is out of scope for coverage/lint fixups unless you regenerated it.
+
+## golangci-lint (mandatory after every Go task)
+
+After finishing code under Scope, **run golangci-lint and fix every finding** before considering the task done.
+
+Project config: `.golangci.yaml` (golangci-lint v2; `run.tests: false`). Do not invent a parallel config.
+
+```bash
+golangci-lint run ./path/to/touched/package/
+```
+
+| Requirement | Rule |
+|-------------|------|
+| When | After every Go change under Scope — not optional, not “later” |
+| Scope | Packages/files you generated or modified only — do not boil the ocean |
+| Clean bar | No golangci-lint **errors** and no **warnings** in that scope |
+| Fix loop | If lint reports any issue, **fix the code** and re-run until clean |
+| `//nolint` | Do not silence issues that extract/rewrite can fix cleanly |
+| Pre-existing | Ignore unrelated debt outside the touched scope; do not introduce new findings |
+
+Write to pass enabled linters from `.golangci.yaml` (when editing code):
+
+| Linter | Habit |
+|--------|--------|
+| `funlen` | ≤70 lines / ≤50 stmts; extract helpers |
+| `cyclop` | max complexity 30; flatten nesting |
+| `errcheck` / `errorlint` | handle errors; `errors.Is` / `As` |
+| `errname` | `errFoo` / `ErrFoo` |
+| `nilerr` / `nilnil` | no fake nil errors |
+| `govet` / `staticcheck` / `ineffassign` / `unused` / `wastedassign` | clean |
+| Others enabled in `.golangci.yaml` | do not introduce new failures or warnings |
+
+## Do not
+
+- Nested `if` / nested `for` when a helper method can flatten.
+- `for range` in new/changed Scope Go when indexed `for` works.
+- New third-party imports beyond the allowed set for that layer.
+- Secrets in logs; HTTP/auth inside the library package.
+- Drive-by refactors unrelated to the assignment.
+- Ship Go changes with golangci-lint errors or warnings on touched packages.
+- Ship library/cmd package changes without the coverage/benchmark bar above where it applies.
