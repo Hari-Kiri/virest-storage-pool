@@ -78,7 +78,7 @@ Unit tests (no live libvirt; mocked interfaces):
 
 ```bash
 export CGO_ENABLED=1
-go test ./storagePool/ ./virestUtilities/ ./cmd/testserver/...
+go test ./storagePool/ ./utilities/ ./cmd/testserver/...
 ```
 
 Integration tests (live libvirt):

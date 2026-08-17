@@ -9,7 +9,7 @@ import (
 
 	"github.com/Hari-Kiri/virest/cmd/testserver/auth"
 	"github.com/Hari-Kiri/virest/storagePool"
-	"github.com/Hari-Kiri/virest/virestUtilities"
+	"github.com/Hari-Kiri/virest/utilities"
 	"libvirt.org/go/libvirt"
 )
 
@@ -41,10 +41,10 @@ func writeErr(w http.ResponseWriter, status int, err error) {
 	writeJSON(w, status, Envelope{Response: false, Error: msg})
 }
 
-func (d *Deps) authorize(r *http.Request) (*auth.Claims, string, error) {
+func (d *Deps) authorize(r *http.Request) (string, error) {
 	claims, err := d.Auth.ParseBearer(r.Header.Get("Authorization"))
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 	uri := r.Header.Get("Hypervisor-Uri")
 	if uri == "" {
@@ -54,16 +54,16 @@ func (d *Deps) authorize(r *http.Request) (*auth.Claims, string, error) {
 		}
 	}
 	if uri == "" {
-		return nil, "", errors.New("hypervisor uri not exist on request header")
+		return "", errors.New("hypervisor uri not exist on request header")
 	}
 	if !d.Auth.AllowHypervisor(claims.Subject, uri) {
-		return nil, "", errors.New("hypervisor uri not allowed for user")
+		return "", errors.New("hypervisor uri not allowed for user")
 	}
-	return claims, uri, nil
+	return uri, nil
 }
 
 func (d *Deps) connect(r *http.Request) (*storagePool.Connection, error) {
-	_, uri, err := d.authorize(r)
+	uri, err := d.authorize(r)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func httpStatusFor(err error) int {
 	if err == nil {
 		return http.StatusOK
 	}
-	if code, ok := virestUtilities.Code(err); ok {
+	if code, ok := utilities.Code(err); ok {
 		switch code {
 		case libvirt.ERR_AUTH_FAILED:
 			return http.StatusUnauthorized
@@ -108,9 +108,15 @@ func httpStatusFor(err error) int {
 	}
 }
 
-func parseUint(v string, fallback uint) (uint, error) {
+const jsonKeyUUID = "uuid"
+
+func uuidData(uuid string) map[string]string {
+	return map[string]string{jsonKeyUUID: uuid}
+}
+
+func parseUint(v string) (uint, error) {
 	if v == "" {
-		return fallback, nil
+		return 0, nil
 	}
 	n, err := strconv.ParseUint(v, 10, 32)
 	if err != nil {

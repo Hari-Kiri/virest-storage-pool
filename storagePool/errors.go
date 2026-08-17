@@ -1,9 +1,9 @@
 package storagePool
 
-import "github.com/Hari-Kiri/virest/virestUtilities"
+import "github.com/Hari-Kiri/virest/utilities"
 
-// wrap annotates err with an operation name via virestUtilities.
-var wrap = virestUtilities.Wrap
+// wrap annotates err with an operation name via utilities.
+var wrap = utilities.Wrap
 
 // finishFree frees p; if free fails and *err is still nil, *err becomes the free error.
 func finishFree(p poolHandle, err *error) {

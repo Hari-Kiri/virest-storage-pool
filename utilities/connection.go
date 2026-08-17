@@ -1,4 +1,4 @@
-package virestUtilities
+package utilities
 
 import "libvirt.org/go/libvirt"
 

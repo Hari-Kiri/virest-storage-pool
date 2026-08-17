@@ -31,21 +31,28 @@ import (
 //	@description				JWT from /storage-pool/authenticate. Prefer value: Bearer {token}
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo})))
-
 	loadDotEnv(".env")
 
 	appName := envOr("VIREST_STORAGE_POOL_APPLICATION_NAME", "virest-storage-pool-testserver")
-	port, err := strconv.Atoi(envOr("VIREST_STORAGE_POOL_APPLICATION_PORT", "8000"))
+	port := mustAtoi(envOr("VIREST_STORAGE_POOL_APPLICATION_PORT", "8000"), "port")
+	lifetimeSec := mustAtoi(envOr("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS", "3600"), "jwt lifetime")
+	store := mustAuthStore(appName, envOr("VIREST_USERS_FILE", "users.yaml"), lifetimeSec)
+	startLibvirtEvents()
+
+	deps := &handlers.Deps{Auth: store}
+	runServer(port, appName, registerRoutes(deps))
+}
+
+func mustAtoi(raw, label string) int {
+	n, err := strconv.Atoi(raw)
 	if err != nil {
-		slog.Error("invalid port", "err", err)
+		slog.Error("invalid "+label, "err", err)
 		os.Exit(1)
 	}
-	lifetimeSec, err := strconv.Atoi(envOr("VIREST_STORAGE_POOL_APPLICATION_JWT_LIFETIME_SECONDS", "3600"))
-	if err != nil {
-		slog.Error("invalid jwt lifetime", "err", err)
-		os.Exit(1)
-	}
-	usersPath := envOr("VIREST_USERS_FILE", "users.yaml")
+	return n
+}
+
+func mustAuthStore(appName, usersPath string, lifetimeSec int) *auth.Store {
 	cfg, err := auth.LoadUsersFile(usersPath)
 	if err != nil {
 		slog.Error("load users file", "path", usersPath, "err", err)
@@ -61,7 +68,10 @@ func main() {
 		slog.Error("auth store", "err", err)
 		os.Exit(1)
 	}
+	return store
+}
 
+func startLibvirtEvents() {
 	if err := libvirt.EventRegisterDefaultImpl(); err != nil {
 		slog.Error("event register", "err", err)
 		os.Exit(1)
@@ -74,8 +84,9 @@ func main() {
 			}
 		}
 	}()
+}
 
-	deps := &handlers.Deps{Auth: store}
+func registerRoutes(deps *handlers.Deps) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/storage-pool/authenticate", deps.Authenticate)
 	mux.HandleFunc("/storage-pool/find-storage-pool-sources", deps.FindSources)
@@ -97,7 +108,10 @@ func main() {
 	mux.Handle("/swagger/", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
+	return mux
+}
 
+func runServer(port int, appName string, mux *http.ServeMux) {
 	addr := fmt.Sprintf(":%d", port)
 	cert := os.Getenv("VIREST_TLS_CERT_FILE")
 	key := os.Getenv("VIREST_TLS_KEY_FILE")

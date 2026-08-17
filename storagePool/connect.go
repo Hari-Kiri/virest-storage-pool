@@ -3,7 +3,7 @@ package storagePool
 import (
 	"errors"
 
-	"github.com/Hari-Kiri/virest/virestUtilities"
+	"github.com/Hari-Kiri/virest/utilities"
 )
 
 // errNoNativePool is returned when event registration needs a real libvirt pool.
@@ -16,7 +16,7 @@ var errConnectionClosed = errors.New("connection is closed")
 var errNilLibvirtConnect = errors.New("connect: nil libvirt connection")
 
 // connectWithAuth dials the hypervisor; overridden in unit tests.
-var connectWithAuth = virestUtilities.ConnectWithAuth
+var connectWithAuth = utilities.ConnectWithAuth
 
 // Connection is a handle to a libvirt hypervisor used for storage-pool operations.
 type Connection struct {
