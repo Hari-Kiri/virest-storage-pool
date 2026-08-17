@@ -30,7 +30,4 @@ __debug_bin*
 .vscode
 
 .cursor/*
-!.cursor/rules/
-!.cursor/rules/**
-!.cursor/skills/
-!.cursor/skills/**
+docs/ai-doc/
