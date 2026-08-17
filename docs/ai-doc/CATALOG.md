@@ -48,7 +48,7 @@ Use when [INDEX.md](INDEX.md) has no row. Prefer INDEX.
 | `storagePool/event.go` | features/pool-events.md |
 | `storagePool/types.go` | backend/types.md |
 | `storagePool/connect.go`, `hypervisor.go`, `libvirt_adapter.go` | backend/library-connection.md or adapters.md |
-| `virestUtilities/*` | backend/library-connection.md or CODING_STANDARD |
+| `utilities/*` | backend/library-connection.md or CODING_STANDARD |
 | `storagePool` public method set | modules/storage-pool.md (if surface changes) |
 | `cmd/testserver/handlers/*`, `main.go` routes | api/endpoints.md (+ features/testserver.md if behavior) |
 | `cmd/testserver/auth/*` | auth/authentication.md |

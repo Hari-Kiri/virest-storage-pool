@@ -24,9 +24,9 @@ Single domain service = the `storagepool` package (no separate service layer).
 
 ## What it calls
 
-- `virest-utilities/utils/hypervisor.ConnectWithAuth`
+- ``utilities`/utils/hypervisor.ConnectWithAuth`
 - libvirt via `libvirtHypervisor` / `libvirtPool`
-- `virest-utilities/utils/errors.Wrap`
+- ``utilities`/utils/errors.Wrap`
 
 ## Dependencies
 

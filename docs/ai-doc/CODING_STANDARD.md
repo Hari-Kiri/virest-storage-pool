@@ -11,7 +11,7 @@ Senior Golang + go-libvirt expert. Production library for **HA hypervisor cluste
 
 | Path | Applies |
 |------|---------|
-| `storagePool/`, `virestUtilities/` | Full bar (style, deps, lint, ≥70% coverage, hot-path benchmarks) |
+| `storagePool/`, `utilities/` | Full bar (style, deps, lint, ≥70% coverage, hot-path benchmarks) |
 | `cmd/testserver/` | Style, lint, testserver deps; ≥70% on touched `auth/` / `handlers/`; benchmarks if hot path |
 | `examples/` | Style, lint, library+stdlib deps, Close; no coverage/benchmark mandate |
 
@@ -37,7 +37,7 @@ Senior Golang + go-libvirt expert. Production library for **HA hypervisor cluste
 - API on `*Connection` in `storagePool`
 - Ports: `hypervisor`, `poolHandle`
 - Adapter: `libvirt_adapter.go`; tests: fakes + `newConnectionForTest`
-- Errors/connect helpers: `virestUtilities`
+- Errors/connect helpers: `utilities`
 - Types: `types.go`
 - `cmd/testserver`: auth → library connect → envelope; no duplicated pool logic
 - `examples`: Connect, defer Close, call library, print
@@ -45,8 +45,8 @@ Senior Golang + go-libvirt expert. Production library for **HA hypervisor cluste
 ## Tests + benchmarks (mandatory where scoped)
 
 ```bash
-go test ./storagePool/ ./virestUtilities/ ./cmd/testserver/... -cover
-go test ./storagePool/ ./virestUtilities/ -bench=. -benchmem
+go test ./storagePool/ ./utilities/ ./cmd/testserver/... -cover
+go test ./storagePool/ ./utilities/ -bench=. -benchmem
 ```
 
 Details: [testing/overview.md](testing/overview.md).
@@ -61,7 +61,7 @@ golangci-lint run ./path/to/touched/package/
 
 ## Docs sync
 
-After `storagePool/`, `virestUtilities/`, `cmd/`, `examples/` changes → one primary page via [INDEX.md](INDEX.md) / [CATALOG.md](CATALOG.md).
+After `storagePool/`, `utilities/`, `cmd/`, `examples/` changes → one primary page via [INDEX.md](INDEX.md) / [CATALOG.md](CATALOG.md).
 
 ## Related Docs
 

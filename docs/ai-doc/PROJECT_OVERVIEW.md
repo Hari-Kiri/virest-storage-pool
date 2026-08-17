@@ -10,7 +10,7 @@ Module: `github.com/Hari-Kiri/virest`
 |-------|--------|
 | Language | Go |
 | Hypervisor API | go-libvirt / libvirtxml |
-| Helpers | in-repo `virestUtilities` (connect + error wrap) |
+| Helpers | in-repo `utilities` (connect + error wrap) |
 | Optional HTTP | `cmd/testserver` (JWT, swaggo) |
 
 ## Primary entry
@@ -22,7 +22,7 @@ Module: `github.com/Hari-Kiri/virest`
 ## Layout
 
 - `storagePool/` — Connection methods, types, adapters
-- `virestUtilities/` — Wrap / ConnectWithAuth / Code
+- `utilities/` — Wrap / ConnectWithAuth / Code
 - `cmd/testserver/handlers` — HTTP → `storagePool`
 - `examples/basic` — sample consumer
 

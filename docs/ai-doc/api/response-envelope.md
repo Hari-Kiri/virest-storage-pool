@@ -20,7 +20,7 @@ Success: `response=true`, optional `data`. Error: `response=false`, `error` mess
 | Message contains hypervisor uri | 400 |
 | Else | 500 |
 
-Libvirt codes extracted via `virest-utilities/utils/errors.Code`.
+Libvirt codes extracted via ``utilities`/utils/errors.Code`.
 
 ## SSE errors
 

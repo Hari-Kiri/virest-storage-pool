@@ -7,7 +7,7 @@
 | Always-on rule | `.cursor/rules/ai-doc.mdc` | Force INDEX routing + post-change doc update |
 | Skill | `.cursor/skills/maintain-ai-doc/SKILL.md` | Read ≤3 / update-one map |
 | Stop hook | `.cursor/hooks/check-ai-doc-sync.sh` via `.cursor/hooks.json` | Nudge if impl changed without ai-doc |
-| Go standards | `.cursor/rules/golang-standards.mdc` | Senior Go + go-libvirt style for `storagePool/`, `virestUtilities/`, `cmd/`, `examples/` |
+| Go standards | `.cursor/rules/golang-standards.mdc` | Senior Go + go-libvirt style for `storagePool/`, `utilities/`, `cmd/`, `examples/` |
 | Library bar | `.cursor/rules/mission-critical-library.mdc` | HA / production bar (always on) for library + cmd + examples |
 | Libvirt skill | `.cursor/skills/go-libvirt-library/SKILL.md` | Library/cmd/examples: perf, N+1, deps, loops, lint, tests |
 

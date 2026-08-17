@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Hari-Kiri/virest/virestUtilities"
+	"github.com/Hari-Kiri/virest/utilities"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -15,15 +15,15 @@ func TestConnectPositiveNegative(t *testing.T) {
 	orig := connectWithAuth
 	t.Cleanup(func() { connectWithAuth = orig })
 
-	connectWithAuth = func(uri string, auth *libvirt.ConnectAuth, flags libvirt.ConnectFlags) (virestUtilities.Connection, error) {
-		return virestUtilities.Connection{}, errors.New("dial fail")
+	connectWithAuth = func(uri string, auth *libvirt.ConnectAuth, flags libvirt.ConnectFlags) (utilities.Connection, error) {
+		return utilities.Connection{}, errors.New("dial fail")
 	}
 	if _, err := Connect("qemu:///system"); err == nil {
 		t.Fatal("expected dial error")
 	}
 
-	connectWithAuth = func(uri string, auth *libvirt.ConnectAuth, flags libvirt.ConnectFlags) (virestUtilities.Connection, error) {
-		return virestUtilities.Connection{Connect: nil}, nil
+	connectWithAuth = func(uri string, auth *libvirt.ConnectAuth, flags libvirt.ConnectFlags) (utilities.Connection, error) {
+		return utilities.Connection{Connect: nil}, nil
 	}
 	if _, err := Connect("qemu:///system"); !errors.Is(err, errNilLibvirtConnect) {
 		t.Fatalf("want nil-conn sentinel, got %v", err)

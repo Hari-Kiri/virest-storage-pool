@@ -3,7 +3,7 @@
 | Path | Role | Kind | Notes |
 |------|------|------|-------|
 | `storagePool/` | Core library | library | Connection API, types, adapters, tests | Primary product | No HTTP/auth |
-| `virestUtilities/` | Shared helpers | library | Wrap, Connect*, Code | Used by storagePool + testserver |
+| `utilities/` | Shared helpers | library | Wrap, Connect*, Code | Used by storagePool + testserver |
 | `cmd/testserver/` | HTTP harness | tooling | JWT auth, Swagger | Optional |
 | `cmd/testserver/handlers/` | HTTP handlers | tooling | routes via `main` | Logic stays in `storagePool` |
 | `cmd/testserver/auth/` | Users/JWT | tooling | yaml users file | |

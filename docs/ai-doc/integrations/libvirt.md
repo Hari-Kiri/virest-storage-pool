@@ -15,7 +15,7 @@ Hypervisor backend for all pool operations.
 
 - `libvirt.org/go/libvirt`
 - `libvirt.org/go/libvirtxml`
-- Connect helper: `virest-utilities/utils/hypervisor`
+- Connect helper: ``utilities`/utils/hypervisor`
 
 ## URI
 

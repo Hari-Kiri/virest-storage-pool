@@ -11,7 +11,7 @@ flowchart LR
   main --> auth
   storagePool --> libvirt[libvirt.org/go/libvirt]
   storagePool --> libvirtxml[libvirt.org/go/libvirtxml]
-  storagePool --> vutil[virestUtilities]
+  storagePool --> vutil[utilities]
   vutil --> libvirt
   auth --> jwt[golang-jwt/jwt/v5]
   auth --> bcrypt[golang.org/x/crypto/bcrypt]
@@ -47,7 +47,7 @@ Connect
 
 ## Library allowed imports
 
-See [CODING_STANDARD.md](CODING_STANDARD.md): go-libvirt (+ libvirtxml), in-repo `virestUtilities`, stdlib.
+See [CODING_STANDARD.md](CODING_STANDARD.md): go-libvirt (+ libvirtxml), in-repo `utilities`, stdlib.
 
 ## Related Docs
 

@@ -16,7 +16,7 @@ All server-side logic lives in Go packages; there is no separate app server for 
 | Query | `list_info.go`, `detail.go` | [../features/pool-query.md](../features/pool-query.md) |
 | Discovery | `detail.go` (Capabilities/FindSources) | [../features/pool-discovery.md](../features/pool-discovery.md) |
 | Events | `event.go` | [../features/pool-events.md](../features/pool-events.md) |
-| Errors | `errors.go` | wrap → virest-utilities |
+| Errors | `errors.go` | wrap → `utilities` |
 | HTTP | `cmd/testserver` | [../features/testserver.md](../features/testserver.md) |
 
 ## Controllers / Repositories / Cron / Queue

@@ -43,7 +43,7 @@ Types: [backend/types.md](../backend/types.md)
 | Dep | Role |
 |-----|------|
 | `libvirt` / `libvirtxml` | Native pool ops / XML models |
-| `virestUtilities` | `Wrap`, `ConnectWithAuth`, `Code` |
+| `utilities` | `Wrap`, `ConnectWithAuth`, `Code` |
 | stdlib `sync` | `runParallel` for List/Info attribute reads |
 
 ## Database / Frontend / Queue

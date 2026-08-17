@@ -21,12 +21,12 @@ Open/close hypervisor connection; pool lookup helper.
 
 ## Uses
 
-- `virestUtilities.ConnectWithAuth(uri, nil, 0)`
+- `utilities.ConnectWithAuth(uri, nil, 0)`
 - Production adapter: `&libvirtHypervisor{conn: virestConn.Connect}`
 
 ## Important Notes
 
-- Auth to libvirt itself is via `virestUtilities` (`nil` creds, flags `0` today)
+- Auth to libvirt itself is via `utilities` (`nil` creds, flags `0` today)
 - Closed connection: `hv` set nil after Close
 - Pool Free errors surfaced via `finishFree` when primary `err` is nil
 

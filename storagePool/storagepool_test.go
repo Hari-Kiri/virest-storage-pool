@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Hari-Kiri/virest/virestUtilities"
+	"github.com/Hari-Kiri/virest/utilities"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
@@ -415,19 +415,19 @@ func TestErrorsAsLibvirt(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	lv, ok := virestUtilities.AsLibvirtError(err)
+	lv, ok := utilities.AsLibvirtError(err)
 	if !ok {
 		t.Fatalf("AsLibvirtError failed: %v", err)
 	}
 	if lv.Code != libvirt.ERR_NO_STORAGE_POOL {
 		t.Fatalf("code=%v", lv.Code)
 	}
-	if code, ok := virestUtilities.Code(err); !ok || code != libvirt.ERR_NO_STORAGE_POOL {
+	if code, ok := utilities.Code(err); !ok || code != libvirt.ERR_NO_STORAGE_POOL {
 		t.Fatalf("Code=%v ok=%v", code, ok)
 	}
 
 	plain := wrap("op", errors.New("plain"))
-	if _, ok := virestUtilities.AsLibvirtError(plain); ok {
+	if _, ok := utilities.AsLibvirtError(plain); ok {
 		t.Fatal("plain error should not be libvirt.Error")
 	}
 }
