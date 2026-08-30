@@ -18,12 +18,13 @@ var (
 //
 // Callers must register a default libvirt event implementation and run the
 // event loop (EventRegisterDefaultImpl + EventRunDefaultImpl) in the process.
-func (c *Connection) WaitEvent(uuid string, kind EventKind) (ev Event, err error) {
+// ref is a pool name or UUID.
+func (c *Connection) WaitEvent(ref string, kind EventKind) (ev Event, err error) {
 	if kind > EventRefresh {
 		return Event{}, wrap("wait event", fmt.Errorf("%w: %d", errUnsupportedEventKind, kind))
 	}
 
-	pool, err := c.lookupPool(uuid)
+	pool, err := c.lookupPool(ref)
 	if err != nil {
 		return Event{}, err
 	}
@@ -94,7 +95,8 @@ func (c *Connection) waitRefreshEvent(pool poolHandle) (ev Event, err error) {
 // until ctx is cancelled or emit returns an error.
 //
 // Callers must run the process-wide libvirt event loop.
-func (c *Connection) StreamEvents(ctx context.Context, uuid string, kind EventKind, emit func(Event) error) (err error) {
+// ref is a pool name or UUID.
+func (c *Connection) StreamEvents(ctx context.Context, ref string, kind EventKind, emit func(Event) error) (err error) {
 	if kind > EventRefresh {
 		return wrap("stream events", fmt.Errorf("%w: %d", errUnsupportedEventKind, kind))
 	}
@@ -102,7 +104,7 @@ func (c *Connection) StreamEvents(ctx context.Context, uuid string, kind EventKi
 		return errEmitRequired
 	}
 
-	pool, err := c.lookupPool(uuid)
+	pool, err := c.lookupPool(ref)
 	if err != nil {
 		return err
 	}
