@@ -3,8 +3,8 @@ package storagePool
 import (
 	"encoding/xml"
 
+	"github.com/Hari-Kiri/virest/utilities"
 	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 )
 
 // Info is volatile information about a storage pool.
@@ -19,21 +19,21 @@ type Info struct {
 	Available  uint64                   `json:"available"`
 }
 
-// Detail is the full storage pool XML description.
+// Detail is the full storage pool description (typed model, not raw XML).
 type Detail struct {
-	libvirtxml.StoragePool
+	utilities.StoragePool
 }
 
 // PoolSummary is a condensed view of a storage pool used by List.
 type PoolSummary struct {
-	Uuid       string                     `json:"uuid"`
-	Name       string                     `json:"name"`
-	State      libvirt.StoragePoolState   `json:"state"`
-	Autostart  bool                       `json:"autostart"`
-	Persistent bool                       `json:"persistent"`
-	Capacity   libvirtxml.StoragePoolSize `json:"capacity"`
-	Allocation libvirtxml.StoragePoolSize `json:"allocation"`
-	Available  libvirtxml.StoragePoolSize `json:"available"`
+	Uuid       string                    `json:"uuid"`
+	Name       string                    `json:"name"`
+	State      libvirt.StoragePoolState  `json:"state"`
+	Autostart  bool                      `json:"autostart"`
+	Persistent bool                      `json:"persistent"`
+	Capacity   utilities.StoragePoolSize `json:"capacity"`
+	Allocation utilities.StoragePoolSize `json:"allocation"`
+	Available  utilities.StoragePoolSize `json:"available"`
 }
 
 // EventKind selects which storage-pool event to wait for or stream.
@@ -80,8 +80,8 @@ type Iqn struct {
 
 // Sources is the discovered set of storage pool sources.
 type Sources struct {
-	XMLName xml.Name                       `xml:"sources" json:"-"`
-	Source  []libvirtxml.StoragePoolSource `xml:"source" json:"source"`
+	XMLName xml.Name                      `xml:"sources" json:"-"`
+	Source  []utilities.StoragePoolSource `xml:"source" json:"source"`
 }
 
 // Capabilities describes supported storage pool types and formats.

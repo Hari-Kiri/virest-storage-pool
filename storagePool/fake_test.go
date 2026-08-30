@@ -3,6 +3,7 @@ package storagePool
 import (
 	"sync"
 
+	"github.com/Hari-Kiri/virest/utilities"
 	"libvirt.org/go/libvirt"
 )
 
@@ -20,7 +21,9 @@ type fakeHypervisor struct {
 	listFlagsSeen libvirt.ConnectListAllStoragePoolsFlags
 
 	poolsByUUID map[string]poolHandle
+	poolsByName map[string]poolHandle
 	lookupErr   error
+	lookupByNameErr error
 
 	definePool   poolHandle
 	defineErr    error
@@ -53,8 +56,18 @@ type fakeHypervisor struct {
 func newFakeHypervisor() *fakeHypervisor {
 	return &fakeHypervisor{
 		poolsByUUID:    map[string]poolHandle{},
+		poolsByName:    map[string]poolHandle{},
 		nextCallbackID: 1,
 	}
+}
+
+// registerPool stores pool under UUID or name lookup based on ref shape.
+func (f *fakeHypervisor) registerPool(ref string, p poolHandle) {
+	if utilities.LooksLikeUUID(ref) {
+		f.poolsByUUID[ref] = p
+		return
+	}
+	f.poolsByName[ref] = p
 }
 
 func (f *fakeHypervisor) Close() (int, error) {
@@ -83,6 +96,22 @@ func (f *fakeHypervisor) LookupStoragePoolByUUIDString(uuid string) (poolHandle,
 		return nil, f.lookupErr
 	}
 	pool, ok := f.poolsByUUID[uuid]
+	if !ok {
+		return nil, libvirt.Error{Code: libvirt.ERR_NO_STORAGE_POOL, Message: "not found"}
+	}
+	return pool, nil
+}
+
+func (f *fakeHypervisor) LookupStoragePoolByName(name string) (poolHandle, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.lookupByNameErr != nil {
+		return nil, f.lookupByNameErr
+	}
+	if f.lookupErr != nil {
+		return nil, f.lookupErr
+	}
+	pool, ok := f.poolsByName[name]
 	if !ok {
 		return nil, libvirt.Error{Code: libvirt.ERR_NO_STORAGE_POOL, Message: "not found"}
 	}
