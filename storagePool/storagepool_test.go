@@ -71,6 +71,38 @@ func TestDefineSuccessAndFailures(t *testing.T) {
 	}
 }
 
+func TestCreateTransientSuccessAndFailures(t *testing.T) {
+	created := &fakePool{uuid: "u-2"}
+	hv := newFakeHypervisor()
+	hv.createTransientPool = created
+	conn := newConnectionForTest(hv)
+
+	uuid, err := conn.CreateTransient(libvirtxml.StoragePool{Name: "p", Type: "dir"}, 0)
+	if err != nil {
+		t.Fatalf("create transient: %v", err)
+	}
+	if uuid != "u-2" {
+		t.Fatalf("uuid=%s", uuid)
+	}
+	if created.freeCalls != 1 {
+		t.Fatalf("created freeCalls=%d", created.freeCalls)
+	}
+	if hv.createTransientConfig == "" {
+		t.Fatal("expected create transient config")
+	}
+
+	hv.createTransientErr = errors.New("create transient failed")
+	if _, err := conn.CreateTransient(libvirtxml.StoragePool{Name: "p", Type: "dir"}, 1); err == nil {
+		t.Fatal("expected create transient error")
+	}
+
+	hv.createTransientErr = nil
+	hv.createTransientPool = &fakePool{getUUIDErr: errors.New("uuid fail")}
+	if _, err := conn.CreateTransient(libvirtxml.StoragePool{Name: "p", Type: "dir"}, 0); err == nil {
+		t.Fatal("expected uuid error")
+	}
+}
+
 func TestLifecycleOps(t *testing.T) {
 	pool := &fakePool{}
 	hv := newFakeHypervisor()

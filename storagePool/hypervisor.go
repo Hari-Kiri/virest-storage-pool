@@ -11,6 +11,7 @@ type hypervisor interface {
 	ListAllStoragePools(flags libvirt.ConnectListAllStoragePoolsFlags) ([]poolHandle, error)
 	LookupStoragePoolByUUIDString(uuid string) (poolHandle, error)
 	StoragePoolDefineXML(xmlConfig string, flags libvirt.StoragePoolDefineFlags) (poolHandle, error)
+	CreateTransient(config string, flags libvirt.StoragePoolCreateFlags) (poolHandle, error)
 	GetStoragePoolCapabilities(flags uint32) (string, error)
 	FindStoragePoolSources(poolType, srcSpec string, flags uint32) (string, error)
 	StoragePoolEventLifecycleRegister(pool poolHandle, callback libvirt.StoragePoolEventLifecycleCallback) (int, error)

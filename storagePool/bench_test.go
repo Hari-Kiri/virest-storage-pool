@@ -92,3 +92,17 @@ func BenchmarkDefine(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkCreateTransient(b *testing.B) {
+	hv := newFakeHypervisor()
+	hv.createTransientPool = &fakePool{uuid: "u"}
+	conn := newConnectionForTest(hv)
+	model := libvirtxml.StoragePool{Name: "p", Type: "dir"}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if _, err := conn.CreateTransient(model, 0); err != nil {
+			b.Fatal(err)
+		}
+	}
+}

@@ -46,6 +46,14 @@ func (h *libvirtHypervisor) StoragePoolDefineXML(xmlConfig string, flags libvirt
 	return &libvirtPool{pool: pool}, nil
 }
 
+func (h *libvirtHypervisor) CreateTransient(config string, flags libvirt.StoragePoolCreateFlags) (poolHandle, error) {
+	pool, err := h.conn.StoragePoolCreateXML(config, flags)
+	if err != nil {
+		return nil, err
+	}
+	return &libvirtPool{pool: pool}, nil
+}
+
 func (h *libvirtHypervisor) GetStoragePoolCapabilities(flags uint32) (string, error) {
 	return h.conn.GetStoragePoolCapabilities(flags)
 }

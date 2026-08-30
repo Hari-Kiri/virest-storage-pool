@@ -256,6 +256,16 @@ func TestDefineMarshalEdge(t *testing.T) {
 	}
 }
 
+func TestCreateTransientMarshalEdge(t *testing.T) {
+	created := &fakePool{uuid: "u", freeErr: errors.New("free created")}
+	hv := newFakeHypervisor()
+	hv.createTransientPool = created
+	conn := newConnectionForTest(hv)
+	if _, err := conn.CreateTransient(libvirtxml.StoragePool{Name: "p", Type: "dir"}, 0); err == nil {
+		t.Fatal("expected free error after create transient")
+	}
+}
+
 func TestRunParallelEmpty(t *testing.T) {
 	if err := runParallel(); err != nil {
 		t.Fatalf("empty parallel: %v", err)

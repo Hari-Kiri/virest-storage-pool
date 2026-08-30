@@ -26,6 +26,27 @@ func (c *Connection) Define(storagePool libvirtxml.StoragePool, flags libvirt.St
 	return uuid, nil
 }
 
+// CreateTransient creates and starts a transient (non-persistent) pool from the model.
+// Equivalent to virsh pool-create / libvirt StoragePoolCreateXML.
+func (c *Connection) CreateTransient(storagePool libvirtxml.StoragePool, flags libvirt.StoragePoolCreateFlags) (uuid string, err error) {
+	config, err := storagePool.Marshal()
+	if err != nil {
+		return "", wrap("marshal pool config", err)
+	}
+
+	created, err := c.hv.CreateTransient(config, flags)
+	if err != nil {
+		return "", wrap("create transient storage pool", err)
+	}
+	defer finishFree(created, &err)
+
+	uuid, err = created.GetUUIDString()
+	if err != nil {
+		return "", wrap("get transient pool uuid", err)
+	}
+	return uuid, nil
+}
+
 // Build builds the underlying storage for a defined pool.
 func (c *Connection) Build(uuid string, flags libvirt.StoragePoolBuildFlags) (err error) {
 	pool, err := c.lookupPool(uuid)

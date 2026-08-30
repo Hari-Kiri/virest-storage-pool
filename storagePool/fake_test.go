@@ -27,6 +27,11 @@ type fakeHypervisor struct {
 	defineXML    string
 	defineFlags  libvirt.StoragePoolDefineFlags
 
+	createTransientPool   poolHandle
+	createTransientErr    error
+	createTransientConfig string
+	createTransientFlags  libvirt.StoragePoolCreateFlags
+
 	capabilitiesXML string
 	capabilitiesErr error
 
@@ -93,6 +98,17 @@ func (f *fakeHypervisor) StoragePoolDefineXML(xmlConfig string, flags libvirt.St
 		return nil, f.defineErr
 	}
 	return f.definePool, nil
+}
+
+func (f *fakeHypervisor) CreateTransient(config string, flags libvirt.StoragePoolCreateFlags) (poolHandle, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.createTransientConfig = config
+	f.createTransientFlags = flags
+	if f.createTransientErr != nil {
+		return nil, f.createTransientErr
+	}
+	return f.createTransientPool, nil
 }
 
 func (f *fakeHypervisor) GetStoragePoolCapabilities(flags uint32) (string, error) {
